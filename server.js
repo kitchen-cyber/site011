@@ -121,8 +121,8 @@ async function getContent() {
         console.warn('[getContent] Supabase error, using fallback');
         return defaultContent;
       }
-      if (!data?.data) {
-        console.warn('[getContent] No data from Supabase, using fallback');
+      if (!data?.data || Object.keys(data.data).length === 0) {
+        console.warn('[getContent] Empty data from Supabase, using fallback');
         return defaultContent;
       }
       return data.data;
@@ -132,6 +132,27 @@ async function getContent() {
     }
   }
   return defaultContent;
+}
+
+// Initialize content on startup by seeding Supabase if empty
+async function initializeContent() {
+  if (!supabase || Object.keys(defaultContent).length === 0) return;
+  try {
+    const { data, error } = await supabase
+      .from('content')
+      .select('data')
+      .eq('id', 1)
+      .single();
+    // If table is empty or error, seed with defaultContent
+    if (error || !data?.data || Object.keys(data.data).length === 0) {
+      console.log('[initializeContent] Seeding Supabase with default content');
+      await supabase
+        .from('content')
+        .upsert({ id: 1, data: defaultContent }, { onConflict: 'id' });
+    }
+  } catch (err) {
+    console.error('[initializeContent error]', err.message);
+  }
 }
 
 // ── Consistent secret for sessions & signed cookies ──
@@ -520,6 +541,9 @@ app.delete('/api/admin/enquiries/:id', requireAdmin, (req, res) => {
 app.use((req, res) => {
   res.status(404).send('<meta http-equiv="refresh" content="2;url=/"><body style="font-family:sans-serif;text-align:center;padding-top:20vh;background:#F0E7DE;color:#0B1842"><h1>404</h1><p>Page not found. Redirecting…</p></body>');
 });
+
+// Initialize content on startup
+initializeContent().catch(err => console.error('[startup] initializeContent failed:', err.message));
 
 // Vercel export
 module.exports = app;
