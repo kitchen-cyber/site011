@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cookieSession = require('cookie-session');
+const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -86,6 +87,13 @@ function getContent() {
   return readJson(CONTENT_FILE, {});
 }
 
+// ── Consistent secret for sessions & signed cookies ──
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+if (!process.env.SESSION_SECRET && IS_PROD) {
+  console.warn('[CRITICAL] SESSION_SECRET not set in environment! Set it to fix login on Vercel.');
+  console.warn('[CRITICAL] Run: node -e "console.log(require(\\'crypto\\').randomBytes(32).toString(\\'hex\\'))"');
+}
+
 // ── App setup ──
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -93,9 +101,10 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
+app.use(cookieParser(SESSION_SECRET));
 app.use(cookieSession({
   name: 'raqt.sid',
-  secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
+  secret: SESSION_SECRET,
   httpOnly: true,
   sameSite: 'lax',
   secure: IS_PROD,
@@ -148,16 +157,15 @@ app.post('/api/enquiry', (req, res) => {
 app.get('/auth/google', (req, res) => {
   if (!OAUTH_CONFIGURED) {
     if (!IS_PROD) {
-      // Local dev: auto-login as admin (skip Google)
       req.session.user = { email: 'dev@localhost', name: 'Dev Admin', picture: '', isAdmin: true };
       return res.redirect('/');
     }
-    // Production without OAuth: show setup instructions
     const baseUrl = getBaseUrl(req);
     return res.redirect(`/admin?setup=1&uri=${encodeURIComponent(baseUrl + '/auth/google/callback')}`);
   }
   const state = crypto.randomBytes(16).toString('hex');
-  req.session.oauthState = state;
+  // Store state in signed cookie (works on serverless Vercel)
+  res.cookie('oauth_state', state, { signed: true, httpOnly: true, sameSite: 'lax', secure: IS_PROD, maxAge: 5 * 60 * 1000 });
   const baseUrl = getBaseUrl(req);
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
@@ -173,14 +181,14 @@ app.get('/auth/google', (req, res) => {
 app.get('/auth/google/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
-    // If Google sent back an error (e.g. redirect_uri mismatch)
     if (req.query.error) {
       return res.redirect(`/admin?setup=1&uri=${encodeURIComponent(getBaseUrl(req) + '/auth/google/callback')}&error=${req.query.error}`);
     }
-    if (!code || !state || state !== req.session.oauthState) {
+    // Verify state from signed cookie (not session - works on serverless)
+    if (!code || !state || state !== req.signedCookies.oauth_state) {
       return res.redirect('/?error=auth_failed');
     }
-    delete req.session.oauthState;
+    res.clearCookie('oauth_state');
     const baseUrl = getBaseUrl(req);
 
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
