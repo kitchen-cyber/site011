@@ -246,7 +246,7 @@ app.post('/api/enquiry', async (req, res) => {
   if (resend) {
     try {
       await resend.emails.send({
-        from: 'noreply@raqtfuel.com',
+        from: 'onboarding@resend.dev',
         to: ADMIN_EMAIL,
         subject: `New Enquiry from ${enquiry.firstName} ${enquiry.lastName}`,
         html: `
@@ -264,7 +264,7 @@ app.post('/api/enquiry', async (req, res) => {
       });
       console.log('[Email sent]', { to: ADMIN_EMAIL, enquiryId: enquiry.id });
     } catch (err) {
-      console.error('[Email error]', err.message);
+      console.error('[Email error]', err.message, err);
       // Don't fail the request if email fails - enquiry is already saved
     }
   }
