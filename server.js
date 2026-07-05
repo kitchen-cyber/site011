@@ -132,22 +132,37 @@ function getContent() {
 
 // Refresh content from Supabase in background (non-blocking)
 async function refreshContent() {
-  if (!supabase) return;
+  if (!supabase || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
   try {
-    const { data, error } = await supabase
-      .from('content')
-      .select('data')
-      .eq('id', 1)
-      .single();
-    if (error || !data?.data || Object.keys(data.data).length === 0) {
-      // Seed with default content if empty
-      const result = await supabase
-        .from('content')
-        .upsert({ id: 1, data: defaultContent }, { onConflict: 'id' });
-      if (result.error) console.error('[refresh] seed error:', result.error.message);
-    } else {
-      contentCache = data.data;
+    const res = await fetch(SUPABASE_URL + '/rest/v1/content?id=eq.1&select=data', {
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY
+      }
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows && rows.length > 0 && rows[0].data && Object.keys(rows[0].data).length > 0) {
+        contentCache = rows[0].data;
+        return;
+      }
     }
+    // Seed with default content if empty
+    const payload = { id: 1, data: defaultContent };
+    const jsonStr = JSON.stringify(payload);
+    const safeJson = jsonStr.replace(/[\u0080-\uFFFF]/g, function(c) {
+      return '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0');
+    });
+    await fetch(SUPABASE_URL + '/rest/v1/content', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: safeJson
+    });
   } catch (err) {
     console.error('[refresh]', err.message);
   }
@@ -157,12 +172,27 @@ async function refreshContent() {
 async function saveContent(incoming) {
   contentCache = incoming;
   let supabaseError = null;
-  if (supabase) {
+  if (supabase && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
     try {
-      const { error } = await supabase
-        .from('content')
-        .upsert({ id: 1, data: incoming }, { onConflict: 'id' });
-      if (error) supabaseError = error.message;
+      // Use raw fetch with manually escaped JSON to avoid Unicode encoding issues
+      const payload = { id: 1, data: incoming };
+      const jsonStr = JSON.stringify(payload);
+      // Escape non-ASCII chars to \uXXXX for safe transport
+      const safeJson = jsonStr.replace(/[\u0080-\uFFFF]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: safeJson
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        supabaseError = 'HTTP ' + res.status + ': ' + errText.slice(0, 200);
+      }
     } catch (err) {
       supabaseError = err.message;
     }
@@ -172,8 +202,8 @@ async function saveContent(incoming) {
     const backupDir = path.join(DATA_DIR, 'backups');
     fs.mkdirSync(backupDir, { recursive: true });
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, `content-${stamp}.json`)); } catch {}
-    const backups = fs.readdirSync(backupDir).filter(f => f.startsWith('content-')).sort();
+    try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, 'content-' + stamp + '.json')); } catch {}
+    const backups = fs.readdirSync(backupDir).filter(function(f) { return f.startsWith('content-'); }).sort();
     while (backups.length > 20) fs.unlinkSync(path.join(backupDir, backups.shift()));
   } catch {}
   try { writeJson(CONTENT_FILE, incoming); } catch {}
