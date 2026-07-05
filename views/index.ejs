@@ -198,7 +198,11 @@ nav {
   cursor: pointer;
   background: none;
   border: none;
-  padding: 4px;
+  padding: 10px;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
 }
 .nav-toggle span {
   width: 24px; height: 1.5px;
@@ -361,7 +365,7 @@ section {
 .section-text {
   font-size: 17px;
   line-height: 1.8;
-  color: rgba(10,15,28,0.65);
+  color: rgba(10,15,28,0.75);
   max-width: 600px;
 }
 
@@ -528,17 +532,22 @@ section {
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  background: rgba(10,15,28,0.06);
+  gap: 20px;
+  background: transparent;
 }
 .menu-card {
   background: var(--cream);
   padding: 72px 56px;
-  transition: background 0.3s;
+  transition: all 0.3s;
   position: relative;
+  border: 1px solid rgba(10,15,28,0.08);
+  border-radius: 8px;
 }
 .menu-card:hover {
   background: #fafafa;
+  border-color: var(--gold);
+  box-shadow: 0 8px 24px rgba(10,15,28,0.06);
+  transform: translateY(-4px);
 }
 .menu-card::before {
   content: '';
@@ -640,7 +649,7 @@ section {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(253,252,251,0.45);
+  color: rgba(253,252,251,0.65);
 }
 
 /* в”Ђв”Ђ Testimonials в”Ђв”Ђ */
@@ -663,8 +672,9 @@ section {
 .testimonial-card {
   padding: 40px 40px 36px;
   border: 1px solid rgba(10,15,28,0.08);
-  transition: border-color 0.3s, background 0.3s, transform 0.3s;
+  transition: all 0.3s;
   position: relative;
+  box-shadow: 0 4px 12px rgba(10,15,28,0.04);
 }
 .testimonial-card::before {
   content: '\201C';
@@ -681,6 +691,7 @@ section {
   border-color: var(--gold);
   background: rgba(10,15,28,0.03);
   transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(10,15,28,0.12);
 }
 .testimonial-text {
   font-family: var(--font-serif);
@@ -739,11 +750,11 @@ section {
 .gallery-track {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
   will-change: transform;
   padding: 0 var(--gutter);
 }
-.gallery-fig { flex-shrink: 0; overflow: hidden; position: relative; width: 70vw; height: 65vh; }
+.gallery-fig { flex-shrink: 0; overflow: hidden; position: relative; width: 70vw; height: 65vh; border-radius: 8px; }
 .gallery-fig img { width: 100%; height: 100%; object-fit: cover; }
 .gallery-fig__label {
   position: absolute;
@@ -934,6 +945,10 @@ footer a {
   transition: color 0.3s;
 }
 footer a:hover { color: var(--gold); }
+.footer-bottom a {
+  display: inline;
+  margin-bottom: 0;
+}
 .footer-bottom {
   max-width: var(--container);
   margin: 50px auto 0;
@@ -1167,51 +1182,118 @@ footer a:hover { color: var(--gold); }
 /* в”Ђв”Ђ Cookie Consent в”Ђв”Ђ */
 #cookie-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 9999;
-  background: rgba(10,15,28,0.5);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  background: transparent;
   display: none;
-  align-items: center;
-  justify-content: center;
   padding: 24px;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+  pointer-events: none;
 }
-#cookie-overlay.show { display: flex; }
+#cookie-overlay.show { display: block; pointer-events: auto; }
 #cookie-dialog {
-  background: var(--cream);
-  color: var(--ink);
-  max-width: 400px;
+  background: var(--ink);
+  color: var(--cream);
+  max-width: 520px;
   width: 100%;
-  padding: 36px 32px 28px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  padding: 24px 32px;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin: 0 auto;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 #cookie-dialog p {
   font-size: 14px;
-  line-height: 1.7;
-  color: rgba(10,15,28,0.6);
-  margin: 0 0 24px;
+  line-height: 1.6;
+  color: rgba(253,252,251,0.75);
+  margin: 0;
+  flex: 1;
 }
-#cookie-dialog a { color: var(--ink); text-decoration: underline; }
-.cookie-btns { display: flex; gap: 12px; justify-content: center; }
+#cookie-dialog a { 
+  color: var(--gold); 
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid var(--gold);
+  transition: opacity 0.2s;
+}
+#cookie-dialog a:hover { opacity: 0.8; }
+.cookie-btns { 
+  display: flex; 
+  gap: 12px; 
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
 .cookie-btn {
-  padding: 12px 28px;
+  padding: 10px 20px;
   border: none;
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: opacity 0.3s;
+  border-radius: 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
-.cookie-btn:hover { opacity: 0.85; }
-.cookie-btn-accept { background: var(--ink); color: var(--cream); }
-.cookie-btn-decline { background: transparent; color: var(--ink); border: 1px solid rgba(10,15,28,0.15); }
+.cookie-btn:hover { transform: translateY(-2px); }
+.cookie-btn-accept { 
+  background: var(--gold); 
+  color: var(--ink);
+}
+.cookie-btn-accept:hover { 
+  background: #D4C5B2;
+  opacity: 0.9;
+}
+.cookie-btn-decline { 
+  background: rgba(240,231,222,0.1); 
+  color: var(--cream);
+  border: 1px solid rgba(240,231,222,0.2);
+}
+.cookie-btn-decline:hover { 
+  background: rgba(240,231,222,0.15);
+}
+@media (max-width: 768px) {
+  #cookie-dialog { 
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .cookie-btns { 
+    width: 100%;
+    justify-content: flex-start;
+  }
+  #cookie-dialog p { font-size: 13px; }
+}
 @media (max-width: 480px) {
-  #cookie-dialog { padding: 28px 20px 24px; }
-  #cookie-dialog p { font-size: 13px; margin-bottom: 20px; }
+  #cookie-overlay { padding: 16px; }
+  #cookie-dialog { 
+    padding: 20px;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .cookie-btns { 
+    width: 100%;
+    flex-direction: column;
+  }
+  .cookie-btn {
+    width: 100%;
+    text-align: center;
+  }
+  #cookie-dialog p { font-size: 12px; }
 }
 </style>
 </head>
@@ -1447,7 +1529,7 @@ if (sessionStorage.getItem('visited')) {
   </div>
   <div class="footer-bottom">
     <span><%= c.footer.copyright %></span>
-    <span><%= c.footer.tagline %></span>
+    <span><%= c.footer.tagline %> · <a href="https://millionpixels.dev/" target="_blank" rel="noopener noreferrer">Designed & Built by Million Pixels</a></span>
   </div>
 </footer>
 
