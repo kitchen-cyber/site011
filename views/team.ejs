@@ -1,0 +1,684 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="only light">
+<title>Our Team вЂ” raqt fuel</title>
+<meta name="description" content="Meet the team behind raqt fuel вЂ” world-class chefs, each a master in their culinary tradition.">
+<link rel="icon" type="image/png" href="<%= c.site.logoNavImage %>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  color-scheme: only light;
+  --cream: #F0E7DE;
+  --paper: #F0E7DE;
+  --ink: #0B1842;
+  --gold: #D4C5B2;
+  --gold-light: rgba(212, 197, 178, 0.3);
+  --font-serif: 'Libre Caslon Text', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', sans-serif;
+  --gutter: 48px;
+  --section-gap: 140px;
+  --radius-sm: 8px;
+  --container: 1200px;
+}
+
+html { overflow-x: hidden; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+.nav-wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  transition: background 0.4s;
+  background: rgba(240,231,222,0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.nav-wrap.scrolled {
+  background: rgba(240,231,222,1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 0 24px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.nav-logo img {
+  height: 56px;
+  width: auto;
+  display: block;
+}
+.nav-links {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 14px 24px;
+  z-index: 301;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 0.3s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0;
+  width: 0; height: 1px;
+  background: var(--gold);
+  transition: width 0.3s;
+}
+.nav-links a:hover::after { width: 100%; }
+.nav-links a:hover { color: var(--gold); }
+.nav-cta {
+  background: var(--gold) !important;
+  color: var(--ink) !important;
+  padding: 10px 24px;
+  font-weight: 600 !important;
+  border-radius: var(--radius-sm) !important;
+  transition: opacity 0.3s, transform 0.3s !important;
+}
+.nav-cta::after { display: none !important; }
+.nav-cta:hover { opacity: 0.85 !important; transform: translateY(-1px) !important; }
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+.nav-toggle span {
+  width: 24px; height: 1.5px;
+  background: var(--ink);
+  transition: 0.3s;
+  transform-origin: center;
+}
+.nav-wrap.scrolled .nav-toggle span { background: var(--ink); }
+
+/* в”Ђв”Ђ Page Hero в”Ђв”Ђ */
+.page-hero {
+  position: relative;
+  height: 50vh;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--ink);
+  clip-path: inset(0);
+  -webkit-clip-path: inset(0);
+}
+.page-hero-bg {
+  position: fixed;
+  inset: -10px;
+  z-index: 0;
+  background-image: url('<%- c.teamPage.heroBackgroundImage %>');
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(3px);
+  -webkit-filter: blur(3px);
+  transform: translateZ(0);
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(11,24,66,0.4);
+  pointer-events: none;
+  z-index: 1;
+}
+.page-hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 var(--gutter);
+}
+.page-hero-tag {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.page-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* в”Ђв”Ђ Team Section в”Ђв”Ђ */
+.team {
+  padding: var(--section-gap) var(--gutter);
+  max-width: var(--container);
+  margin: 0 auto;
+}
+.team-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+.section-label::before,
+.section-label::after {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--gold);
+}
+.section-title {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.section-text {
+  font-size: 16px;
+  color: rgba(11,24,66,0.6);
+  max-width: 560px;
+  margin: 16px auto 0;
+  line-height: 1.7;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+.team-card {
+  text-align: center;
+}
+.team-card-image {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+  margin-bottom: 20px;
+  background: var(--gold-light);
+}
+.team-card-name {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.team-card-role {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.team-card-bio {
+  font-size: 14px;
+  color: rgba(11,24,66,0.6);
+  line-height: 1.7;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* в”Ђв”Ђ Values Section в”Ђв”Ђ */
+.values {
+  background: var(--ink);
+  padding: 100px var(--gutter);
+  text-align: center;
+}
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 60px;
+  max-width: 1000px;
+  margin: 48px auto 0;
+}
+.value-card h3 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--cream);
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+.value-card p {
+  font-size: 14px;
+  color: rgba(240,231,222,0.55);
+  line-height: 1.7;
+}
+
+/* в”Ђв”Ђ Footer в”Ђв”Ђ */
+footer {
+  background: var(--ink);
+  color: rgba(253,252,251,0.5);
+  padding: 80px var(--gutter) 50px;
+}
+.footer-grid {
+  max-width: var(--container);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 80px;
+}
+footer h4 {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--cream);
+  margin-bottom: 20px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+footer p {
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 320px;
+}
+footer a {
+  color: rgba(253,252,251,0.5);
+  text-decoration: none;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 10px;
+  transition: color 0.3s;
+}
+footer a:hover { color: var(--gold); }
+.footer-bottom {
+  max-width: var(--container);
+  margin: 50px auto 0;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(253,252,251,0.3);
+}
+
+/* в”Ђв”Ђ Reduced motion в”Ђв”Ђ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .animate { opacity: 1; animation: none; }
+}
+
+/* в”Ђв”Ђ Responsive в”Ђв”Ђ */
+@media (max-width: 1024px) {
+  :root { --gutter: 32px; --section-gap: 100px; }
+  .team-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+}
+
+@media (max-width: 768px) {
+  :root { --gutter: 24px; --section-gap: 80px; }
+  .nav-wrap { padding: 0 16px; }
+  .nav-wrap.scrolled { padding: 0 16px; }
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 200;
+    background: rgba(10,15,28,0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+  }
+  .nav-links.open a { color: #FFFFFF; font-size: 14px; }
+  .nav-toggle { display: flex; z-index: 201; }
+  .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translateY(4px); background: #FFFFFF; }
+  .nav-toggle.open span:nth-child(2) { transform: rotate(-45deg) translateY(-4px); background: #FFFFFF; }
+  .page-hero { min-height: 320px; height: 40vh; }
+  .page-hero-title { font-size: 32px; }
+  .team-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .values { padding: 60px var(--gutter); }
+  .values-grid { grid-template-columns: 1fr; gap: 40px; }
+  footer { padding: 56px var(--gutter) 36px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 40px; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; margin-top: 32px; padding-top: 20px; }
+}
+
+@media (max-width: 480px) {
+  :root { --gutter: 16px; --section-gap: 60px; }
+  .nav-wrap { padding: 0 12px; }
+  .nav-wrap.scrolled { padding: 0 12px; }
+  .nav-links.open { gap: 24px; }
+  .nav-links.open a { font-size: 13px; }
+  .page-hero { min-height: 280px; }
+  .page-hero-title { font-size: 26px; }
+  .team-grid { grid-template-columns: 1fr; gap: 40px; }
+  .team-header { margin-bottom: 40px; }
+  .values { padding: 40px var(--gutter); }
+  footer { padding: 44px var(--gutter) 28px; }
+  .footer-bottom { margin-top: 24px; padding-top: 16px; }
+}
+
+/* в”Ђв”Ђ Animations в”Ђв”Ђ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate { opacity: 0; animation: fadeUp 0.8s forwards; }
+
+/* в”Ђв”Ђ Preloader в”Ђв”Ђ */
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #F0E7DE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+#preloader.loaded {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+#preloader.skip { display: none; }
+.preloader-content { text-align: center; }
+.preloader-logo { margin-bottom: 32px; }
+.preloader-logo img {
+  height: clamp(120px, 30vw, 280px);
+  width: auto;
+  display: block;
+  margin: 0 auto;
+}
+.preloader-bar {
+  width: 120px;
+  height: 3px;
+  background: rgba(11,24,66,0.15);
+  margin: 0 auto;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.preloader-bar-fill {
+  width: 0;
+  height: 100%;
+  background: #0B1842;
+  border-radius: 2px;
+  animation: preloaderProgress 2s ease-in-out forwards;
+}
+@keyframes preloaderProgress {
+  0% { width: 0; }
+  60% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* в”Ђв”Ђ Cookie Consent в”Ђв”Ђ */
+#cookie-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: rgba(10,15,28,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+#cookie-overlay.show { display: flex; }
+#cookie-dialog {
+  background: var(--cream);
+  color: var(--ink);
+  max-width: 400px;
+  width: 100%;
+  padding: 36px 32px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+#cookie-dialog p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(10,15,28,0.6);
+  margin: 0 0 24px;
+}
+.cookie-btns { display: flex; gap: 12px; justify-content: center; }
+.cookie-btn {
+  padding: 12px 28px;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.3s;
+}
+.cookie-btn:hover { opacity: 0.85; }
+.cookie-btn-accept { background: var(--ink); color: var(--cream); }
+.cookie-btn-decline { background: transparent; color: var(--ink); border: 1px solid rgba(10,15,28,0.15); }
+@media (max-width: 480px) {
+  #cookie-dialog { padding: 28px 20px 24px; }
+  #cookie-dialog p { font-size: 13px; margin-bottom: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div id="preloader">
+  <div class="preloader-content">
+    <div class="preloader-logo"><img src="<%= c.site.logoPreloaderImage %>" alt="raqt fuel"></div>
+    <div class="preloader-bar"><div class="preloader-bar-fill"></div></div>
+  </div>
+</div>
+<script>
+if (sessionStorage.getItem('visited')) {
+  document.getElementById('preloader').classList.add('skip');
+} else {
+  sessionStorage.setItem('visited', '1');
+}
+</script>
+
+<div class="nav-wrap">
+  <a href="/" class="nav-logo"><img src="<%= c.site.logoNavImage %>" alt="raqt fuel"></a>
+  <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span>
+  </button>
+</div>
+<ul class="nav-links" id="navLinks">
+  <li><a href="/#philosophy"><%= c.nav.linkPhilosophy %></a></li>
+  <li><a href="/#services"><%= c.nav.linkServices %></a></li>
+  <li><a href="/team" style="color: var(--gold);"><%= c.nav.linkTeam %></a></li>
+  <li><a href="/#menu"><%= c.nav.linkMenu %></a></li>
+  <li><a href="/#contact" class="nav-cta"><%= c.nav.linkCta %></a></li>
+</ul>
+
+<section class="page-hero">
+  <div class="page-hero-bg"></div>
+  <div class="page-hero-content">
+    <p class="page-hero-tag animate"><%= c.teamPage.heroTag %></p>
+    <h1 class="page-hero-title animate" style="animation-delay: 0.2s;"><%- nl2br(c.teamPage.heroTitle) %></h1>
+  </div>
+</section>
+
+<section class="team">
+  <div class="team-header">
+    <div class="section-label"><%= c.teamPage.label %></div>
+    <h2 class="section-title"><%= c.teamPage.title %></h2>
+    <p class="section-text"><%= c.teamPage.subtitle %></p>
+  </div>
+
+  <div class="team-grid">
+    <% c.teamPage.members.forEach(function(m) { %>
+    <div class="team-card">
+      <img class="team-card-image" src="<%= m.image %>" alt="<%= m.name %>" loading="lazy">
+      <h3 class="team-card-name"><%= m.name %></h3>
+      <p class="team-card-role"><%= m.role %></p>
+      <p class="team-card-bio"><%= m.bio %></p>
+    </div>
+    <% }); %>
+  </div>
+</section>
+
+<section class="values">
+  <div class="section-label" style="color: var(--cream); opacity: 0.5;"><%= c.teamPage.valuesLabel %></div>
+  <h2 class="section-title" style="color: var(--cream);"><%= c.teamPage.valuesTitle %></h2>
+  <div class="values-grid">
+    <% c.teamPage.values.forEach(function(v) { %>
+    <div class="value-card">
+      <h3><%= v.title %></h3>
+      <p><%= v.text %></p>
+    </div>
+    <% }); %>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h4><%= c.footer.aboutTitle %></h4>
+      <p><%= c.footer.aboutText %></p>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <% c.services.cards.forEach(function(card) { %>
+      <a href="/#services"><%= card.title %></a>
+      <% }); %>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <a href="/#philosophy"><%= c.philosophy.label %></a>
+      <a href="/team">The Team</a>
+      <a href="/#gallery"><%= c.gallery.label %></a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="/#contact"><%= c.contact.address %></a>
+      <a href="tel:<%= c.contact.phone.replace(/\(0\)/g, '').replace(/[^+\d]/g, '') %>"><%= c.contact.phone %></a>
+      <a href="mailto:<%= c.contact.email %>"><%= c.contact.email %></a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span><%= c.footer.copyright %></span>
+    <span><%= c.footer.tagline %></span>
+  </div>
+</footer>
+
+<div id="cookie-overlay">
+  <div id="cookie-dialog">
+    <p><%= c.cookie.text %></p>
+    <div class="cookie-btns">
+      <button class="cookie-btn cookie-btn-decline" id="cookieDecline"><%= c.cookie.declineText %></button>
+      <button class="cookie-btn cookie-btn-accept" id="cookieAccept"><%= c.cookie.acceptText %></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Preloader
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('preloader').classList.add('loaded'), 600);
+});
+
+// Nav scroll effect
+const navWrap = document.querySelector('.nav-wrap');
+const navLinks = document.querySelector('.nav-links');
+window.addEventListener('scroll', () => {
+  const s = window.scrollY > 80;
+  navWrap.classList.toggle('scrolled', s);
+  navLinks.classList.toggle('scrolled', s);
+});
+
+// Mobile nav toggle
+const toggle = document.getElementById('navToggle');
+const links = document.getElementById('navLinks');
+function closeNav() {
+  links.classList.remove('open');
+  toggle.classList.remove('open');
+  toggle.setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+}
+toggle.addEventListener('click', () => {
+  const opening = !links.classList.contains('open');
+  links.classList.toggle('open');
+  toggle.classList.toggle('open');
+  toggle.setAttribute('aria-expanded', String(opening));
+  document.body.style.overflow = opening ? 'hidden' : '';
+});
+links.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) closeNav();
+});
+
+// Parallax for page-hero-bg
+const heroBg = document.querySelector('.page-hero-bg');
+window.addEventListener('scroll', () => {
+  if (window.innerWidth >= 768 && heroBg) {
+    const scrollY = window.scrollY;
+    heroBg.style.transform = `translateY(${scrollY * 0.15}px) translateZ(0)`;
+  }
+});
+
+// Cookie consent
+const cookieOverlay = document.getElementById('cookie-overlay');
+const cookieAccept = document.getElementById('cookieAccept');
+const cookieDecline = document.getElementById('cookieDecline');
+function hideCookie() { cookieOverlay.classList.remove('show'); }
+cookieAccept.addEventListener('click', (e) => { e.preventDefault(); localStorage.setItem('cookieBar', 'accepted'); hideCookie(); });
+cookieDecline.addEventListener('click', () => { localStorage.setItem('cookieBar', 'declined'); hideCookie(); });
+cookieOverlay.addEventListener('click', (e) => { if (e.target === cookieOverlay) hideCookie(); });
+if (!localStorage.getItem('cookieBar')) {
+  setTimeout(() => cookieOverlay.classList.add('show'), 1000);
+}
+</script>
+
+</body>
+</html>
+

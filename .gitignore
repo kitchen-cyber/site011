@@ -1,0 +1,11 @@
+node_modules/
+.env
+data/enquiries.json
+data/backups/
+public/uploads/*
+!public/uploads/.gitkeep
+index.html.backup
+repo_site011/
+server.log
+server.err.log
+_legacy/

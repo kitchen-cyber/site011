@@ -1,0 +1,1596 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="only light">
+<title><%= c.site.title %></title>
+<meta name="description" content="<%= c.site.metaDescription %>">
+<meta property="og:title" content="<%= c.site.title %>">
+<meta property="og:description" content="<%= c.site.metaDescription %>">
+<meta property="og:type" content="website">
+<meta property="og:image" content="<%= c.hero.backgroundImage %>">
+<link rel="icon" type="image/png" href="<%= c.site.logoNavImage %>">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FoodEstablishment",
+  "name": "raqt fuel",
+  "servesCuisine": "International",
+  "address": { "@type": "PostalAddress", "streetAddress": "<%= c.contact.address %>", "addressLocality": "London", "addressCountry": "GB" },
+  "telephone": "<%= c.contact.phone %>",
+  "email": "<%= c.contact.email %>"
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  color-scheme: only light;
+  --cream: #F0E7DE;
+  --paper: #F0E7DE;
+  --ink: #0B1842;
+  --gold: #D4C5B2;
+  --gold-light: rgba(212, 197, 178, 0.3);
+  --surface: #f9f9f9;
+  --outline: #c6c6cd;
+  --font-serif: 'Libre Caslon Text', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', sans-serif;
+  --gutter: 48px;
+  --section-gap: 140px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --deco-color: rgba(212, 197, 178, 0.4);
+  --container: 1200px;
+}
+
+html { scroll-behavior: smooth; overflow-x: hidden; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* в”Ђв”Ђ Navigation в”Ђв”Ђ */
+.nav-wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  transition: background 0.4s, padding 0.4s;
+  background: rgba(240,231,222,0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.nav-wrap.scrolled {
+  background: rgba(240,231,222,1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 0 24px;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.nav-logo img {
+  height: 56px;
+  width: auto;
+  display: block;
+}
+.nav-links {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 14px 24px;
+  z-index: 301;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 0.3s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0;
+  width: 0; height: 1px;
+  background: var(--gold);
+  transition: width 0.3s;
+}
+.nav-links a:hover::after { width: 100%; }
+.nav-links a:hover { color: var(--gold); }
+.nav-cta {
+  background: var(--gold) !important;
+  color: var(--ink) !important;
+  padding: 10px 24px;
+  font-weight: 600 !important;
+  transition: opacity 0.3s, transform 0.3s !important;
+  border-radius: var(--radius-sm) !important;
+}
+.nav-cta::after { display: none !important; }
+.nav-cta:hover { opacity: 0.85 !important; transform: translateY(-1px) !important; }
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+.nav-toggle span {
+  width: 24px; height: 1.5px;
+  background: var(--ink);
+  transition: 0.3s;
+  transform-origin: center;
+}
+.nav-wrap.scrolled .nav-toggle span { background: var(--ink); }
+.nav-links.scrolled a::after { background: var(--gold); }
+
+/* в”Ђв”Ђ Hero в”Ђв”Ђ */
+.hero {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  min-height: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--ink);
+  clip-path: inset(0);
+  -webkit-clip-path: inset(0);
+}
+.hero-bg {
+  position: fixed;
+  inset: -10px;
+  z-index: 0;
+  background-image: url('<%- c.hero.backgroundImage %>');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(3px);
+  -webkit-filter: blur(3px);
+  transform: translateZ(0);
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 800px;
+  padding: 0 var(--gutter);
+}
+.hero-tag {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.3s forwards;
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(42px, 7vw, 80px);
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.5s forwards;
+}
+.hero-sub {
+  font-size: 18px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 300;
+  max-width: 520px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.7s forwards;
+}
+.hero-btn {
+  display: inline-block;
+  padding: 16px 40px;
+  background: var(--gold);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 0.3s, transform 0.3s;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.9s forwards;
+  border-radius: var(--radius-sm);
+}
+.hero-btn:hover { opacity: 0.85; transform: translateY(-2px); }
+.hero-scroll {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  animation: fadeUp 0.8s 1.2s forwards;
+  opacity: 0;
+}
+.scroll-line {
+  width: 1px; height: 40px;
+  background: linear-gradient(to bottom, var(--gold), transparent);
+}
+
+/* в”Ђв”Ђ Sections common в”Ђв”Ђ */
+section {
+  padding: var(--section-gap) var(--gutter);
+}
+.section-inner {
+  margin: 0 auto;
+}
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.section-label::before,
+.section-label::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--deco-color);
+}
+.section-label::after { display: none; }
+.centered-label { justify-content: center; }
+.centered-label::after { display: block; }
+.section-title {
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin-bottom: 20px;
+}
+.section-text {
+  font-size: 17px;
+  line-height: 1.8;
+  color: rgba(10,15,28,0.65);
+  max-width: 600px;
+}
+
+/* в”Ђв”Ђ Philosophy в”Ђв”Ђ */
+.philosophy {
+  background: var(--cream);
+  padding: 0;
+  display: flex;
+}
+.philosophy-grid {
+  display: flex;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: 100vh;
+  align-items: stretch;
+}
+.philosophy-image {
+  position: relative;
+  width: 26vw;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.philosophy-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.philosophy-image .parallax-img {
+  transform: none;
+}
+.philosophy-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 80px 80px 70px;
+  max-width: 540px;
+}
+.philosophy-content .section-title {
+  font-style: italic;
+  color: var(--ink);
+}
+.philosophy-content .section-text {
+  margin-bottom: 28px;
+}
+.philosophy-signature {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-style: italic;
+  color: var(--ink);
+  position: relative;
+  padding-top: 24px;
+}
+.philosophy-signature::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 40px; height: 1px;
+  background: var(--gold);
+}
+
+/* в”Ђв”Ђ Services в”Ђв”Ђ */
+.services {
+  position: relative;
+  color: var(--cream);
+  background: var(--ink);
+  overflow: hidden;
+  clip-path: inset(0);
+  -webkit-clip-path: inset(0);
+}
+.services-bg {
+  position: fixed;
+  inset: -10px;
+  z-index: 0;
+  background-image: url('<%- c.services.backgroundImage %>');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(3px);
+  -webkit-filter: blur(3px);
+  transform: translateZ(0);
+}
+.services::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(10,15,28,0.35);
+  pointer-events: none;
+  z-index: 1;
+}
+.services .section-inner {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+.services .section-label { color: var(--gold); }
+.services .section-title { color: var(--cream); }
+.services .section-text { color: rgba(253,252,251,0.75); margin: 0 auto; }
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-top: 60px;
+  background: rgba(10,15,28,0.2);
+}
+.service-card {
+  position: relative;
+  padding: 60px 48px;
+  text-align: center;
+  transition: background 0.4s;
+}
+.service-card:hover { background: rgba(253,252,251,0.04); }
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.2;
+}
+.service-card-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--deco-color);
+  border-radius: 50%;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+.service-card h3 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--cream);
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+.service-card p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(253,252,251,0.55);
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+/* в”Ђв”Ђ Menu в”Ђв”Ђ */
+.menu {
+  background: var(--cream);
+  overflow: hidden;
+}
+.menu-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 80px;
+}
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: rgba(10,15,28,0.06);
+}
+.menu-card {
+  background: var(--cream);
+  padding: 72px 56px;
+  transition: background 0.3s;
+  position: relative;
+}
+.menu-card:hover {
+  background: #fafafa;
+}
+.menu-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.25;
+}
+.menu-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  margin-bottom: 32px;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--gold);
+  position: relative;
+}
+.menu-card-icon::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--deco-color);
+  border-radius: 50%;
+}
+.menu-card-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  margin-bottom: 16px;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.menu-card-desc {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(10,15,28,0.5);
+}
+.menu-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0;
+  transition: opacity 0.4s;
+  z-index: 1;
+}
+.menu-card:hover::after {
+  opacity: 1;
+}
+
+/* в”Ђв”Ђ Stats / Numbers в”Ђв”Ђ */
+.stats {
+  background: var(--ink);
+  padding: 100px var(--gutter);
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  text-align: center;
+  position: relative;
+}
+.stats-grid > * {
+  position: relative;
+  padding: 0 20px;
+}
+.stats-grid > * + *::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 48px;
+  background: rgba(212,197,178,0.5);
+}
+.stat-num {
+  font-family: var(--font-serif);
+  font-size: clamp(44px, 4.5vw, 72px);
+  color: var(--cream);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-suffix {
+  font-size: 0.6em;
+  color: var(--gold);
+  vertical-align: super;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(253,252,251,0.45);
+}
+
+/* в”Ђв”Ђ Testimonials в”Ђв”Ђ */
+.testimonials {
+  background: var(--cream);
+  padding-bottom: 140px;
+}
+.testimonials .section-title { color: var(--ink); }
+.testimonials .section-label { color: var(--gold); }
+.testimonials-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.testimonials-slider {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 60px;
+}
+.testimonial-card {
+  padding: 40px 40px 36px;
+  border: 1px solid rgba(10,15,28,0.08);
+  transition: border-color 0.3s, background 0.3s, transform 0.3s;
+  position: relative;
+}
+.testimonial-card::before {
+  content: '\201C';
+  position: absolute;
+  top: 16px;
+  left: 24px;
+  font-family: var(--font-serif);
+  font-size: 64px;
+  line-height: 1;
+  color: var(--deco-color);
+  pointer-events: none;
+}
+.testimonial-card:hover {
+  border-color: var(--gold);
+  background: rgba(10,15,28,0.03);
+  transform: translateY(-3px);
+}
+.testimonial-text {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-style: italic;
+  line-height: 1.7;
+  color: rgba(10,15,28,0.85);
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+.testimonial-author {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(10,15,28,0.45);
+  position: relative;
+  padding-top: 16px;
+}
+.testimonial-author::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 24px;
+  height: 1px;
+  background: var(--deco-color);
+}
+.testimonial-author span {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* в”Ђв”Ђ Gallery (horizontal scroll section) в”Ђв”Ђ */
+.gallery-wrap {
+  position: relative;
+  height: 300vh;
+  padding: 0;
+  background: var(--ink);
+}
+.gallery-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.gallery-header {
+  position: absolute;
+  top: 32px;
+  left: var(--gutter);
+  z-index: 2;
+}
+.gallery-header .section-label { color: var(--gold); }
+.gallery-header .section-title { color: var(--cream); font-size: clamp(24px, 3vw, 36px); }
+.gallery-track {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  will-change: transform;
+  padding: 0 var(--gutter);
+}
+.gallery-fig { flex-shrink: 0; overflow: hidden; position: relative; width: 70vw; height: 65vh; }
+.gallery-fig img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-fig__label {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(10,15,28,0.6);
+  padding: 6px 14px;
+}
+.gallery-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--gold);
+  z-index: 2;
+}
+.gallery-counter {
+  position: absolute;
+  bottom: 32px;
+  right: var(--gutter);
+  font-size: 13px;
+  color: rgba(253,252,251,0.4);
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+/* в”Ђв”Ђ Contact в”Ђв”Ђ */
+.contact {
+  background: var(--cream);
+  padding-bottom: 100px;
+}
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 80px;
+}
+.contact-info h3 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+.contact-info > p {
+  font-size: 15px;
+  color: rgba(10,15,28,0.55);
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+.contact-detail {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.contact-detail-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--gold);
+  background: rgba(212,197,178,0.06);
+}
+.contact-detail-text {
+  font-size: 15px;
+  color: rgba(10,15,28,0.65);
+  line-height: 1.5;
+}
+.contact-detail-text a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.contact-detail-text a:hover { color: var(--ink); }
+.contact-details-wrap { margin-top: 48px; }
+.contact-detail-text strong {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.contact-form input,
+.contact-form textarea,
+.contact-form select {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.3s, background 0.3s;
+  border-radius: var(--radius-sm);
+}
+.contact-form input:focus,
+.contact-form textarea:focus,
+.contact-form select:focus {
+  border-color: var(--gold);
+  background: var(--cream);
+}
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: rgba(10,15,28,0.3);
+}
+.contact-form textarea {
+  height: 120px;
+  resize: vertical;
+}
+.contact-form button {
+  padding: 16px 32px;
+  background: var(--ink);
+  color: var(--cream);
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+  border-radius: var(--radius-sm);
+}
+.contact-form button:hover { background: var(--gold); color: var(--ink); transform: translateY(-2px); }
+.contact-form button:disabled { opacity: 0.6; cursor: default; transform: none; }
+.form-status {
+  font-size: 14px;
+  line-height: 1.6;
+  display: none;
+}
+.form-status.success { display: block; color: var(--ink); }
+.form-status.error { display: block; color: #93000a; }
+
+/* в”Ђв”Ђ Footer в”Ђв”Ђ */
+footer {
+  background: var(--ink);
+  color: rgba(253,252,251,0.5);
+  padding: 80px var(--gutter) 50px;
+}
+.footer-grid {
+  max-width: var(--container);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 80px;
+}
+footer h4 {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--cream);
+  margin-bottom: 20px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+footer p {
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 320px;
+}
+footer a {
+  color: rgba(253,252,251,0.5);
+  text-decoration: none;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 10px;
+  transition: color 0.3s;
+}
+footer a:hover { color: var(--gold); }
+.footer-bottom {
+  max-width: var(--container);
+  margin: 50px auto 0;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(253,252,251,0.3);
+}
+
+/* в”Ђв”Ђ Animations в”Ђв”Ђ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s, transform 0.8s;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* в”Ђв”Ђ Parallax в”Ђв”Ђ */
+.parallax-wrap {
+  overflow: hidden;
+  position: relative;
+}
+.parallax-img {
+  will-change: transform;
+  transform: scale(1.35);
+}
+
+/* в”Ђв”Ђ Reduced motion в”Ђв”Ђ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .reveal { opacity: 1; transform: none; }
+  .hero-tag, .hero-title, .hero-sub, .hero-btn, .hero-scroll { opacity: 1; animation: none; }
+}
+
+/* в”Ђв”Ђ Responsive в”Ђв”Ђ */
+@media (max-width: 1024px) {
+  :root { --gutter: 32px; --section-gap: 100px; }
+  .philosophy-content { padding: 60px 40px 60px 40px; }
+  .hero { min-height: 550px; }
+  .section-title { font-size: 30px; }
+  .gallery-fig { width: 65vw; height: 70vh; }
+  .gallery-wrap { height: 300vh; }
+  .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+}
+
+@media (max-width: 768px) {
+  :root { --gutter: 24px; --section-gap: 80px; }
+  .nav-wrap { padding: 0 16px; }
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 200;
+    background: rgba(10,15,28,0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+  }
+  .nav-links.open a { color: #FFFFFF; font-size: 14px; }
+  .nav-toggle { display: flex; z-index: 201; }
+  .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translateY(4px); background: #FFFFFF; }
+  .nav-toggle.open span:nth-child(2) { transform: rotate(-45deg) translateY(-4px); background: #FFFFFF; }
+  .hero-title { font-size: 36px; }
+  .hero-sub { font-size: 16px; }
+  .section-title { font-size: 28px; }
+  .philosophy { flex-direction: column; padding: 24px 0 var(--section-gap); }
+  .philosophy-grid { flex-direction: column; min-height: auto; max-width: 100%; }
+  .philosophy-image { width: calc(100% - 48px); margin: 0 auto; height: 72vh; min-height: 350px; order: 2; }
+  .philosophy-content { padding: 40px 24px; max-width: 100%; order: 1; }
+  .services-grid { grid-template-columns: 1fr; }
+  .service-card { padding: 40px 32px; }
+  .menu-grid { grid-template-columns: 1fr; }
+  .menu-card { padding: 48px 32px; }
+  .menu-header { margin-bottom: 48px; }
+  .stats { padding: 60px var(--gutter); }
+  .stats-grid > * + *::before { display: none; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+  .testimonials { padding-bottom: 80px; }
+  .testimonials-slider { grid-template-columns: 1fr; gap: 24px; }
+  .testimonial-card { padding: 32px 28px 28px; }
+  .gallery-fig { width: calc(100vw - 2*var(--gutter)); height: 65vh; }
+  .gallery-wrap { height: 250vh; }
+  .contact-grid { grid-template-columns: 1fr; gap: 32px; }
+  .contact { padding-bottom: 60px; }
+  .contact-info > p { font-size: 14px; margin-bottom: 20px; }
+  .contact-details-wrap { margin-top: 32px; }
+  .contact-detail { margin-bottom: 12px; }
+  .contact-detail-icon { width: 32px; height: 32px; font-size: 11px; }
+  .contact-detail-text { font-size: 14px; }
+  .contact-form { gap: 16px; }
+  .form-row { grid-template-columns: 1fr; gap: 16px; }
+  .contact-form button { padding: 14px 24px; }
+  .contact-form input,
+  .contact-form textarea,
+  .contact-form select { padding: 12px 14px; }
+  footer { padding: 56px var(--gutter) 36px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 40px; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; margin-top: 32px; padding-top: 20px; }
+}
+
+@media (max-width: 480px) {
+  :root { --gutter: 16px; --section-gap: 60px; }
+  .nav-wrap { padding: 0 12px; }
+  .nav-wrap.scrolled { padding: 0 12px; }
+  .nav-links.open { gap: 24px; }
+  .nav-links.open a { font-size: 13px; }
+  .section-label { gap: 8px; font-size: 10px; }
+  .section-label::before,
+  .section-label::after { width: 16px; }
+  .section-title { font-size: 24px; }
+  .section-text { font-size: 15px; }
+  .hero { min-height: 480px; }
+  .hero-title { font-size: 26px; margin-bottom: 14px; line-height: 1.15; }
+  .hero-sub { font-size: 14px; margin-bottom: 24px; }
+  .hero-btn { font-size: 11px; padding: 14px 24px; }
+  .hero-tag { font-size: 10px; }
+  .hero-scroll { display: none; }
+  .philosophy-grid { max-width: 100%; }
+  .philosophy-image { height: 300px; min-height: 300px; width: calc(100% - 32px); margin: 0 auto; }
+  .philosophy-content { padding: 28px 16px; max-width: 100%; }
+  .philosophy-content .section-title { font-size: 24px; }
+  .philosophy-content .section-text { font-size: 15px; }
+  .philosophy-signature { font-size: 14px; }
+  .services-grid { margin-top: 32px; }
+  .service-card { padding: 28px 16px; }
+  .service-card-num { width: 36px; height: 36px; font-size: 12px; margin-bottom: 16px; }
+  .service-card h3 { font-size: 18px; }
+  .service-card p { font-size: 13px; }
+  .menu-header { margin-bottom: 32px; }
+  .menu-card { padding: 36px 20px; }
+  .menu-card-icon { width: 44px; height: 44px; font-size: 14px; margin-bottom: 20px; }
+  .menu-card-title { font-size: 19px; }
+  .menu-card-desc { font-size: 14px; }
+  .stats { padding: 40px var(--gutter); }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stats-grid > * { padding: 0 8px; }
+  .stat-num { font-size: 26px; }
+  .stat-label { font-size: 10px; }
+  .testimonials { padding-bottom: 60px; }
+  .testimonials-slider { gap: 16px; }
+  .testimonial-card { padding: 28px 20px 24px; }
+  .testimonial-card::before { font-size: 36px; top: 10px; left: 12px; }
+  .testimonial-text { font-size: 15px; }
+  .gallery-header { top: 16px; }
+  .gallery-track { gap: 8px; }
+  .gallery-fig { width: calc(100vw - 2*var(--gutter)); height: 55vh; }
+  .gallery-fig__label { font-size: 9px; padding: 4px 10px; top: 10px; left: 10px; }
+  .gallery-wrap { height: 200vh; }
+  .contact { padding-bottom: 40px; }
+  .contact-grid { gap: 20px; }
+  .contact-info > p { margin-bottom: 16px; font-size: 14px; }
+  .contact-details-wrap { margin-top: 24px; }
+  .contact-detail { margin-bottom: 10px; gap: 12px; }
+  .contact-detail-icon { width: 28px; height: 28px; font-size: 10px; }
+  .contact-detail-text { font-size: 13px; }
+  .contact-form { gap: 12px; }
+  .form-row { gap: 12px; }
+  .contact-form button { padding: 12px 20px; }
+  .contact-form textarea { height: 90px; }
+  .contact-form input,
+  .contact-form textarea,
+  .contact-form select { padding: 10px 12px; }
+  footer { padding: 44px var(--gutter) 28px; }
+  .footer-bottom { margin-top: 24px; padding-top: 16px; }
+}
+
+/* в”Ђв”Ђ Preloader в”Ђв”Ђ */
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #F0E7DE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+#preloader.loaded {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+#preloader.skip { display: none; }
+.preloader-content {
+  text-align: center;
+}
+.preloader-logo {
+  margin-bottom: 32px;
+}
+.preloader-logo img {
+  height: clamp(120px, 30vw, 280px);
+  width: auto;
+  display: block;
+  margin: 0 auto;
+}
+.preloader-bar {
+  width: 120px;
+  height: 3px;
+  background: rgba(11,24,66,0.15);
+  margin: 0 auto;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.preloader-bar-fill {
+  width: 0;
+  height: 100%;
+  background: #0B1842;
+  border-radius: 2px;
+  animation: preloaderProgress 2s ease-in-out forwards;
+}
+@keyframes preloaderProgress {
+  0% { width: 0; }
+  60% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* в”Ђв”Ђ Cookie Consent в”Ђв”Ђ */
+#cookie-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: rgba(10,15,28,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+#cookie-overlay.show { display: flex; }
+#cookie-dialog {
+  background: var(--cream);
+  color: var(--ink);
+  max-width: 400px;
+  width: 100%;
+  padding: 36px 32px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+#cookie-dialog p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(10,15,28,0.6);
+  margin: 0 0 24px;
+}
+#cookie-dialog a { color: var(--ink); text-decoration: underline; }
+.cookie-btns { display: flex; gap: 12px; justify-content: center; }
+.cookie-btn {
+  padding: 12px 28px;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.3s;
+}
+.cookie-btn:hover { opacity: 0.85; }
+.cookie-btn-accept { background: var(--ink); color: var(--cream); }
+.cookie-btn-decline { background: transparent; color: var(--ink); border: 1px solid rgba(10,15,28,0.15); }
+@media (max-width: 480px) {
+  #cookie-dialog { padding: 28px 20px 24px; }
+  #cookie-dialog p { font-size: 13px; margin-bottom: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div id="preloader">
+  <div class="preloader-content">
+    <div class="preloader-logo"><img src="<%= c.site.logoPreloaderImage %>" alt="raqt fuel"></div>
+    <div class="preloader-bar"><div class="preloader-bar-fill"></div></div>
+  </div>
+</div>
+<script>
+// Show preloader only on first visit this session
+if (sessionStorage.getItem('visited')) {
+  document.getElementById('preloader').classList.add('skip');
+} else {
+  sessionStorage.setItem('visited', '1');
+}
+</script>
+
+<div class="nav-wrap">
+  <a href="/" class="nav-logo"><img src="<%= c.site.logoNavImage %>" alt="raqt fuel"></a>
+  <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span>
+  </button>
+</div>
+<ul class="nav-links" id="navLinks">
+  <li><a href="#philosophy"><%= c.nav.linkPhilosophy %></a></li>
+  <li><a href="#services"><%= c.nav.linkServices %></a></li>
+  <li><a href="/team"><%= c.nav.linkTeam %></a></li>
+  <li><a href="#menu"><%= c.nav.linkMenu %></a></li>
+  <li><a href="#contact" class="nav-cta"><%= c.nav.linkCta %></a></li>
+</ul>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <p class="hero-tag"><%= c.hero.tag %></p>
+    <h1 class="hero-title"><%- nl2br(c.hero.title) %></h1>
+    <p class="hero-sub"><%= c.hero.subtitle %></p>
+    <a href="#contact" class="hero-btn"><%= c.hero.buttonText %></a>
+  </div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<section class="philosophy" id="philosophy">
+  <div class="section-inner philosophy-grid">
+    <div class="philosophy-image reveal parallax-wrap">
+      <img class="parallax-img" src="<%= c.philosophy.image %>" alt="Artfully plated dish" data-speed="0.04" data-scale="1">
+    </div>
+    <div class="philosophy-content reveal">
+      <p class="section-label"><%= c.philosophy.label %></p>
+      <h2 class="section-title"><%- nl2br(c.philosophy.title) %></h2>
+      <p class="section-text"><%= c.philosophy.paragraph1 %></p>
+      <p class="section-text"><%= c.philosophy.paragraph2 %></p>
+      <div class="philosophy-signature"><%= c.philosophy.signature %></div>
+    </div>
+  </div>
+</section>
+
+<section class="services" id="services">
+  <div class="services-bg"></div>
+  <div class="section-inner">
+    <p class="section-label centered-label"><%= c.services.label %></p>
+    <h2 class="section-title"><%- nl2br(c.services.title) %></h2>
+    <p class="section-text"><%= c.services.subtitle %></p>
+    <div class="services-grid">
+      <% c.services.cards.forEach(function(card, i) { %>
+      <div class="service-card reveal">
+        <span class="service-card-num"><%= String(i + 1).padStart(2, '0') %></span>
+        <h3><%= card.title %></h3>
+        <p><%= card.text %></p>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<section class="menu" id="menu">
+  <div class="section-inner">
+    <div class="menu-header">
+      <p class="section-label centered-label"><%= c.menu.label %></p>
+      <h2 class="section-title"><%- nl2br(c.menu.title) %></h2>
+      <p class="section-text" style="margin:0 auto;text-align:center;"><%= c.menu.subtitle %></p>
+    </div>
+    <div class="menu-grid">
+      <% c.menu.cards.forEach(function(card, i) { %>
+      <div class="menu-card reveal">
+        <div class="menu-card-icon"><%= String(i + 1).padStart(2, '0') %></div>
+        <div class="menu-card-title"><%- nl2br(card.title) %></div>
+        <div class="menu-card-desc"><%= card.text %></div>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stats-grid">
+    <% c.stats.items.forEach(function(stat) { %>
+    <div class="reveal">
+      <div class="stat-num"><span class="stat-count" data-target="<%= stat.value %>">0</span><span class="stat-suffix"><%= stat.suffix %></span></div>
+      <div class="stat-label"><%= stat.label %></div>
+    </div>
+    <% }); %>
+  </div>
+</section>
+
+<section class="testimonials">
+  <div class="testimonials-inner">
+    <p class="section-label centered-label"><%= c.testimonials.label %></p>
+    <h2 class="section-title" style="text-align:center"><%= c.testimonials.title %></h2>
+    <div class="testimonials-slider">
+      <% c.testimonials.items.forEach(function(t) { %>
+      <div class="testimonial-card reveal">
+        <div class="testimonial-text">"<%= t.text %>"</div>
+        <div class="testimonial-author"><%= t.authorPrefix %><span><%= t.author %></span><%= t.authorSuffix %></div>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<section class="gallery-wrap" id="gallery">
+  <div class="gallery-sticky">
+    <div class="gallery-header">
+      <p class="section-label"><%= c.gallery.label %></p>
+      <h2 class="section-title"><%= c.gallery.title %></h2>
+    </div>
+    <div class="gallery-track" id="galleryTrack">
+      <% c.gallery.items.forEach(function(item) { %>
+      <div class="gallery-fig">
+        <img src="<%= item.image %>" alt="<%= item.alt %>" loading="lazy">
+        <% if (item.caption) { %><span class="gallery-fig__label"><%= item.caption %></span><% } %>
+      </div>
+      <% }); %>
+    </div>
+    <div class="gallery-progress" id="galleryProgress"></div>
+    <div class="gallery-counter" id="galleryCounter">1 / <%= c.gallery.items.length %></div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="contact-grid">
+    <div class="contact-info reveal">
+      <p class="section-label"><%= c.contact.label %></p>
+      <h2 class="section-title"><%- nl2br(c.contact.title) %></h2>
+      <p><%= c.contact.subtitle %></p>
+      <div class="contact-details-wrap">
+        <div class="contact-detail">
+          <div class="contact-detail-icon">вЊ‚</div>
+          <div>
+            <div class="contact-detail-text"><strong>Address</strong></div>
+            <div class="contact-detail-text"><%= c.contact.address %></div>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon">вњ†</div>
+          <div>
+            <div class="contact-detail-text"><strong>Telephone</strong></div>
+            <div class="contact-detail-text"><a href="tel:<%= c.contact.phone.replace(/\(0\)/g, '').replace(/[^+\d]/g, '') %>"><%= c.contact.phone %></a></div>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon">вњ‰</div>
+          <div>
+            <div class="contact-detail-text"><strong>Email</strong></div>
+            <div class="contact-detail-text"><a href="mailto:<%= c.contact.email %>"><%= c.contact.email %></a></div>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon">в—·</div>
+          <div>
+            <div class="contact-detail-text"><strong>Hours</strong></div>
+            <div class="contact-detail-text"><%= c.contact.hours %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <form class="contact-form reveal" id="enquiryForm">
+      <div class="form-row">
+        <input type="text" name="firstName" placeholder="First Name" autocomplete="given-name" aria-label="First Name" required>
+        <input type="text" name="lastName" placeholder="Last Name" autocomplete="family-name" aria-label="Last Name" required>
+      </div>
+      <input type="email" name="email" placeholder="Email Address" autocomplete="email" aria-label="Email Address" required>
+      <input type="tel" name="phone" placeholder="Phone Number" autocomplete="tel" aria-label="Phone Number">
+      <select name="eventType" aria-label="Event Type" required>
+        <option value="">Event Type</option>
+        <option>Private Dining</option>
+        <option>Corporate Event</option>
+        <option>Wedding</option>
+        <option>Cooking Atelier</option>
+        <option>Global Cuisine Experience</option>
+        <option>Other</option>
+      </select>
+      <input type="text" name="guestCount" placeholder="Expected Guest Count" aria-label="Expected Guest Count">
+      <textarea name="message" placeholder="What are you craving? Any cuisine, any dietary needs, any style вЂ” tell us everythingвЂ¦" aria-label="Message" required></textarea>
+      <input type="text" name="website" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button type="submit"><%= c.contact.formButtonText %></button>
+      <p class="form-status" id="formStatus" role="status"></p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h4><%= c.footer.aboutTitle %></h4>
+      <p><%= c.footer.aboutText %></p>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <% c.services.cards.forEach(function(card) { %>
+      <a href="#services"><%= card.title %></a>
+      <% }); %>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <a href="#philosophy"><%= c.philosophy.label %></a>
+      <a href="/team">The Team</a>
+      <a href="#gallery"><%= c.gallery.label %></a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="#contact"><%= c.contact.address %></a>
+      <a href="tel:<%= c.contact.phone.replace(/\(0\)/g, '').replace(/[^+\d]/g, '') %>"><%= c.contact.phone %></a>
+      <a href="mailto:<%= c.contact.email %>"><%= c.contact.email %></a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span><%= c.footer.copyright %></span>
+    <span><%= c.footer.tagline %></span>
+  </div>
+</footer>
+
+<script>
+// Parallax effect (desktop only)
+const parallaxImgs = document.querySelectorAll('.parallax-img');
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      if (window.innerWidth >= 768) {
+        const viewCenter = window.innerHeight / 2;
+        parallaxImgs.forEach(img => {
+          const wrap = img.closest('.parallax-wrap');
+          if (!wrap) return;
+          const rect = wrap.getBoundingClientRect();
+          const elCenter = rect.top + rect.height / 2;
+          const diff = (elCenter - viewCenter) * (parseFloat(img.dataset.speed) || 0.05);
+          const scale = parseFloat(img.dataset.scale) || 1.35;
+          img.style.transform = `translateY(${diff}px) scale(${scale})`;
+        });
+      } else {
+        parallaxImgs.forEach(img => { img.style.transform = ''; });
+      }
+      ticking = false;
+    });
+    ticking = true;
+  }
+});
+
+// Nav scroll effect
+const navWrap = document.querySelector('.nav-wrap');
+const navLinks = document.querySelector('.nav-links');
+window.addEventListener('scroll', () => {
+  const s = window.scrollY > 80;
+  navWrap.classList.toggle('scrolled', s);
+  navLinks.classList.toggle('scrolled', s);
+});
+
+// Mobile nav toggle
+const toggle = document.getElementById('navToggle');
+const links = document.getElementById('navLinks');
+function closeNav() {
+  links.classList.remove('open');
+  toggle.classList.remove('open');
+  toggle.setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+}
+toggle.addEventListener('click', () => {
+  const opening = !links.classList.contains('open');
+  links.classList.toggle('open');
+  toggle.classList.toggle('open');
+  toggle.setAttribute('aria-expanded', String(opening));
+  document.body.style.overflow = opening ? 'hidden' : '';
+});
+links.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', closeNav);
+});
+links.addEventListener('click', (e) => {
+  if (e.target === links) closeNav();
+});
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) closeNav();
+});
+
+// Gallery horizontal translation
+const galleryWrap = document.querySelector('.gallery-wrap');
+const galleryTrack = document.getElementById('galleryTrack');
+const galleryCounter = document.getElementById('galleryCounter');
+const galleryProgress = document.getElementById('galleryProgress');
+const galleryCount = galleryTrack ? galleryTrack.children.length : 0;
+let galleryTicking = false;
+
+function updateGallery() {
+  if (!galleryWrap || !galleryTrack) return;
+  const wrapRect = galleryWrap.getBoundingClientRect();
+  const wrapH = wrapRect.height;
+  const viewH = window.innerHeight;
+  const scrollable = wrapH - viewH;
+  if (scrollable <= 0) return;
+  const progress = Math.max(0, Math.min(1, -wrapRect.top / scrollable));
+  const scrollW = galleryTrack.scrollWidth - window.innerWidth;
+  galleryTrack.style.transform = `translateX(-${progress * scrollW}px)`;
+  const idx = Math.min(Math.floor(progress * galleryCount), galleryCount - 1);
+  if (galleryCounter) galleryCounter.textContent = `${idx + 1} / ${galleryCount}`;
+  if (galleryProgress) galleryProgress.style.width = `${progress * 100}%`;
+}
+
+window.addEventListener('scroll', () => {
+  if (!galleryTicking) {
+    requestAnimationFrame(() => { updateGallery(); galleryTicking = false; });
+    galleryTicking = true;
+  }
+}, { passive: true });
+window.addEventListener('resize', updateGallery);
+
+// Preloader
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('preloader').classList.add('loaded');
+  }, 600);
+});
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+    else entry.target.classList.remove('visible');
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Counter animation
+const counters = document.querySelectorAll('.stat-count');
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !entry.target.dataset.animated) {
+      entry.target.dataset.animated = 'true';
+      const target = parseInt(entry.target.dataset.target);
+      const duration = 1500;
+      const start = performance.now();
+      function update(now) {
+        if (!entry.target.dataset.animated) return;
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(eased * target);
+        entry.target.textContent = current;
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+    if (!entry.isIntersecting) {
+      delete entry.target.dataset.animated;
+      entry.target.textContent = '0';
+    }
+  });
+}, { threshold: 0.5 });
+counters.forEach(el => counterObserver.observe(el));
+
+// Enquiry form в†’ API
+const enquiryForm = document.getElementById('enquiryForm');
+const formStatus = document.getElementById('formStatus');
+enquiryForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = enquiryForm.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  formStatus.className = 'form-status';
+  try {
+    const data = Object.fromEntries(new FormData(enquiryForm).entries());
+    const res = await fetch('/api/enquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Request failed');
+    formStatus.textContent = <%- JSON.stringify(c.contact.formSuccessMessage) %>;
+    formStatus.classList.add('success');
+    enquiryForm.reset();
+  } catch (err) {
+    formStatus.textContent = 'Something went wrong. Please try again or email us directly.';
+    formStatus.classList.add('error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+<div id="cookie-overlay">
+  <div id="cookie-dialog">
+    <p><%= c.cookie.text %></p>
+    <div class="cookie-btns">
+      <button class="cookie-btn cookie-btn-decline" id="cookieDecline"><%= c.cookie.declineText %></button>
+      <button class="cookie-btn cookie-btn-accept" id="cookieAccept"><%= c.cookie.acceptText %></button>
+    </div>
+  </div>
+</div>
+<script>
+// Cookie consent
+const cookieOverlay = document.getElementById('cookie-overlay');
+const cookieAccept = document.getElementById('cookieAccept');
+const cookieDecline = document.getElementById('cookieDecline');
+function hideCookie() { cookieOverlay.classList.remove('show'); }
+cookieAccept.addEventListener('click', (e) => { e.preventDefault(); localStorage.setItem('cookieBar', 'accepted'); hideCookie(); });
+cookieDecline.addEventListener('click', () => { localStorage.setItem('cookieBar', 'declined'); hideCookie(); });
+cookieOverlay.addEventListener('click', (e) => { if (e.target === cookieOverlay) hideCookie(); });
+if (!localStorage.getItem('cookieBar')) {
+  setTimeout(() => cookieOverlay.classList.add('show'), 1000);
+}
+</script>
+
+</body>
+</html>
+
