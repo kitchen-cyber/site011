@@ -798,6 +798,10 @@ footer a:hover { color: var(--gold); }
   </div>
 </footer>
 
+<button id="scrollTop" aria-label="Scroll to top">
+  <svg viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+</button>
+
 <div id="cookie-overlay">
   <div id="cookie-dialog">
     <p><%= c.cookie.text %></p>
@@ -895,19 +899,17 @@ if (!localStorage.getItem('cookieBar')) {
 }
 
 // Scroll to top
-const scrollBtn = document.getElementById('scrollTop');
-if (scrollBtn) {
-  window.addEventListener('scroll', () => {
-    scrollBtn.classList.toggle('visible', window.scrollY > 500);
-  }, { passive: true });
-  scrollBtn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-}
-<button id="scrollTop" aria-label="Scroll to top">
-  <svg viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
-</button>
-
+document.addEventListener('DOMContentLoaded', function() {
+  const scrollBtn = document.getElementById('scrollTop');
+  if (scrollBtn) {
+    window.addEventListener('scroll', () => {
+      scrollBtn.classList.toggle('visible', window.scrollY > 500);
+    }, { passive: true });
+    scrollBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+});
 </script>
 
 </body>
