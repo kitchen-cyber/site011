@@ -1633,15 +1633,9 @@ fetch('/api/auth/status').then(r => r.json()).then(data => {
     if (firstNameField && !firstNameField.value) firstNameField.value = nameParts[0] || '';
     if (lastNameField && !lastNameField.value) lastNameField.value = nameParts.slice(1).join(' ') || '';
     if (emailField && !emailField.value) emailField.value = data.user.email || '';
-  } else if (data.oauthConfigured) {
+  } else {
+    // Not logged in — always show Sign in button
     el.innerHTML = '<a href="/auth/google" class="nav-google">Sign in with Google</a>';
-  } else if (data.devMode) {
-    el.innerHTML = '<a href="#" class="nav-google" id="devLoginBtn">Dev Login</a>';
-    document.getElementById('devLoginBtn').addEventListener('click', async (e) => {
-      e.preventDefault();
-      await fetch('/auth/dev-login', { method: 'POST' });
-      location.reload();
-    });
   }
 });
 
