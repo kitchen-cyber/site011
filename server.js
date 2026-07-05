@@ -29,7 +29,16 @@ const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY
 // ── Email config (Resend) ──
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'kitchen@table42.co.uk';
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+let resend = null;
+try {
+  if (RESEND_API_KEY) {
+    resend = new Resend(RESEND_API_KEY);
+    console.log('[Resend initialized]');
+  }
+} catch (err) {
+  console.error('[Resend init error]', err.message);
+  resend = null;
+}
 
 const DATA_DIR = IS_VERCEL ? '/tmp/data' : path.join(__dirname, 'data');
 const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
@@ -215,61 +224,67 @@ app.get('/team.html', (req, res) => res.redirect(301, '/team'));
 
 // ── Public API: enquiry form ──
 app.post('/api/enquiry', async (req, res) => {
-  const { firstName, lastName, email, phone, eventType, guestCount, message, website } = req.body || {};
-  if (website) return res.json({ ok: true });
-  if (!firstName || !lastName || !email || !eventType || !message) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) {
-    return res.status(400).json({ error: 'Invalid email' });
-  }
-
-  const enquiry = {
-    id: crypto.randomUUID(),
-    firstName: String(firstName).slice(0, 100),
-    lastName: String(lastName).slice(0, 100),
-    email: String(email).slice(0, 200),
-    phone: String(phone || '').slice(0, 50),
-    eventType: String(eventType).slice(0, 100),
-    guestCount: String(guestCount || '').slice(0, 50),
-    message: String(message).slice(0, 5000),
-    status: 'new',
-    createdAt: new Date().toISOString()
-  };
-
-  // Save to file
-  const enquiries = readJson(ENQUIRIES_FILE, []);
-  enquiries.unshift(enquiry);
-  writeJson(ENQUIRIES_FILE, enquiries);
-
-  // Send email via Resend
-  if (resend) {
-    try {
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: ADMIN_EMAIL,
-        subject: `New Enquiry from ${enquiry.firstName} ${enquiry.lastName}`,
-        html: `
-          <h2>New Enquiry Received</h2>
-          <p><strong>Name:</strong> ${enquiry.firstName} ${enquiry.lastName}</p>
-          <p><strong>Email:</strong> <a href="mailto:${enquiry.email}">${enquiry.email}</a></p>
-          <p><strong>Phone:</strong> ${enquiry.phone || '(not provided)'}</p>
-          <p><strong>Event Type:</strong> ${enquiry.eventType}</p>
-          <p><strong>Guest Count:</strong> ${enquiry.guestCount || '(not specified)'}</p>
-          <h3>Message:</h3>
-          <p>${enquiry.message.replace(/\n/g, '<br>')}</p>
-          <hr>
-          <p><a href="https://${req.hostname}/admin">View in Admin Panel</a></p>
-        `
-      });
-      console.log('[Email sent]', { to: ADMIN_EMAIL, enquiryId: enquiry.id });
-    } catch (err) {
-      console.error('[Email error]', err.message, err);
-      // Don't fail the request if email fails - enquiry is already saved
+  try {
+    const { firstName, lastName, email, phone, eventType, guestCount, message, website } = req.body || {};
+    if (website) return res.json({ ok: true });
+    if (!firstName || !lastName || !email || !eventType || !message) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
-  }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) {
+      return res.status(400).json({ error: 'Invalid email' });
+    }
 
-  res.json({ ok: true });
+    const enquiry = {
+      id: crypto.randomUUID(),
+      firstName: String(firstName).slice(0, 100),
+      lastName: String(lastName).slice(0, 100),
+      email: String(email).slice(0, 200),
+      phone: String(phone || '').slice(0, 50),
+      eventType: String(eventType).slice(0, 100),
+      guestCount: String(guestCount || '').slice(0, 50),
+      message: String(message).slice(0, 5000),
+      status: 'new',
+      createdAt: new Date().toISOString()
+    };
+
+    // Save to file
+    const enquiries = readJson(ENQUIRIES_FILE, []);
+    enquiries.unshift(enquiry);
+    writeJson(ENQUIRIES_FILE, enquiries);
+    console.log('[Enquiry saved]', { id: enquiry.id, email: enquiry.email });
+
+    // Send email via Resend (optional, don't fail if it doesn't work)
+    if (resend) {
+      try {
+        await resend.emails.send({
+          from: 'onboarding@resend.dev',
+          to: ADMIN_EMAIL,
+          subject: `New Enquiry from ${enquiry.firstName} ${enquiry.lastName}`,
+          html: `
+            <h2>New Enquiry Received</h2>
+            <p><strong>Name:</strong> ${enquiry.firstName} ${enquiry.lastName}</p>
+            <p><strong>Email:</strong> <a href="mailto:${enquiry.email}">${enquiry.email}</a></p>
+            <p><strong>Phone:</strong> ${enquiry.phone || '(not provided)'}</p>
+            <p><strong>Event Type:</strong> ${enquiry.eventType}</p>
+            <p><strong>Guest Count:</strong> ${enquiry.guestCount || '(not specified)'}</p>
+            <h3>Message:</h3>
+            <p>${enquiry.message.replace(/\n/g, '<br>')}</p>
+            <hr>
+            <p><a href="https://${req.hostname}/admin">View in Admin Panel</a></p>
+          `
+        });
+        console.log('[Email sent]', { to: ADMIN_EMAIL, enquiryId: enquiry.id });
+      } catch (err) {
+        console.error('[Email send error]', err.message);
+        // Don't fail the request if email fails - enquiry is already saved
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Enquiry endpoint error]', err.message);
+    res.status(500).json({ error: 'Failed to save enquiry' });
+  }
 });
 
 // ── Google OAuth ──
