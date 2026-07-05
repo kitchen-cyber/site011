@@ -17,7 +17,7 @@
     "title": "We Cook\nAnything You Crave",
     "subtitle": "No menu. No limits. Tell us what you want — from any cuisine, any culture, any style — and we'll make it flawlessly. That's our promise.",
     "buttonText": "Reserve Your Experience",
-    "backgroundImage": "/img/hero-bg.jpg"
+    "backgroundImage": "/uploads/1783281914480-7f36a8ec.png"
   },
   "philosophy": {
     "label": "Our Philosophy",
@@ -249,5 +249,43 @@
     "text": "This site uses cookies to improve your experience. By continuing, you agree to our use of cookies.",
     "acceptText": "Accept",
     "declineText": "Decline"
+  },
+  "privacyTerms": {
+    "pageTitle": "Privacy & Terms",
+    "lastUpdated": "Last updated: July 2026",
+    "sections": [
+      {
+        "heading": "1. Information We Collect",
+        "body": "When you use our website, we may collect personal information that you voluntarily provide to us when you fill out the enquiry form, including your name, email address, phone number, and event details. We also automatically collect certain technical information such as your IP address, browser type, and usage patterns through cookies and similar technologies."
+      },
+      {
+        "heading": "2. How We Use Your Information",
+        "body": "We use the information we collect to respond to your catering enquiries, communicate with you about our services, improve our website and customer experience, and comply with legal obligations. We do not sell your personal information to third parties."
+      },
+      {
+        "heading": "3. Cookies",
+        "body": "Our website uses cookies to enhance your browsing experience, analyse site traffic, and remember your preferences. You can control cookie settings through your browser. Continuing to use our website signifies your consent to our use of cookies as described in this policy."
+      },
+      {
+        "heading": "4. Data Sharing",
+        "body": "We may share your information with trusted third-party service providers who assist us in operating our website and serving our customers (e.g., email delivery services, analytics providers). These parties are contractually obligated to protect your data and use it only for the purposes we specify."
+      },
+      {
+        "heading": "5. Data Security",
+        "body": "We implement reasonable security measures to protect your personal information from unauthorised access, alteration, disclosure, or destruction. However, no method of transmission over the internet is completely secure, and we cannot guarantee absolute security."
+      },
+      {
+        "heading": "6. Your Rights",
+        "body": "You have the right to access, correct, or delete your personal information held by us. You may also object to or restrict certain processing of your data. To exercise these rights, please contact us using the details below."
+      },
+      {
+        "heading": "7. Changes to This Policy",
+        "body": "We may update this Privacy & Terms policy from time to time. Any changes will be posted on this page with an updated revision date. We encourage you to review this policy periodically."
+      },
+      {
+        "heading": "8. Contact Us",
+        "body": "If you have any questions about this Privacy & Terms policy or wish to exercise your data rights, please contact us at hello@raqtfuel.com or write to 67 Charlotte Street, London, W1T 4PD."
+      }
+    ]
   }
 }
