@@ -519,30 +519,58 @@ app.get('/api/admin/diag', requireAdmin, async (req, res) => {
   res.json(result);
 });
 
-// Image upload
+// Image upload — saves to Supabase Storage (or local fallback)
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: UPLOADS_DIR,
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-      cb(null, `${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`);
-    }
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ok = /^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/.test(file.mimetype);
     cb(ok ? null : new Error('Only image files are allowed'), ok);
   }
 });
-app.post('/api/admin/upload', requireAdmin, (req, res) => {
-  upload.single('image')(req, res, (err) => {
+const STORAGE_BUCKET = 'uploads';
+const SUPABASE_STORAGE_URL = SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}` : null;
+
+app.post('/api/admin/upload', requireAdmin, async (req, res) => {
+  upload.single('image')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file' });
-    res.json({ ok: true, url: `/uploads/${req.file.filename}` });
+
+    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+    const filename = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`;
+
+    // Upload to Supabase Storage
+    if (supabase && SUPABASE_STORAGE_URL) {
+      try {
+        const { error } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .upload(filename, req.file.buffer, {
+            contentType: req.file.mimetype,
+            upsert: true
+          });
+        if (error) throw error;
+        const url = `${SUPABASE_STORAGE_URL}/${filename}`;
+        return res.json({ ok: true, url });
+      } catch (e) {
+        console.error('[Storage upload error]', e.message);
+        // Fall through to local fallback
+      }
+    }
+
+    // Local fallback
+    try {
+      const dest = path.join(UPLOADS_DIR, filename);
+      fs.writeFileSync(dest, req.file.buffer);
+      console.log('[Upload saved locally]', dest);
+      res.json({ ok: true, url: `/uploads/${filename}` });
+    } catch (e) {
+      console.error('[Local upload error]', e.message);
+      res.status(500).json({ error: 'Upload failed' });
+    }
   });
 });
 
-// Serve uploaded images on Vercel
+// Serve uploaded images on Vercel (local fallback only)
 if (IS_VERCEL) {
   app.use('/uploads', express.static(UPLOADS_DIR));
 }
@@ -576,6 +604,24 @@ app.use((req, res) => {
 
 // Refresh content cache from Supabase on startup (non-blocking)
 refreshContent().catch(err => console.error('[startup] refreshContent failed:', err.message));
+
+// Ensure Supabase storage bucket exists (non-blocking)
+async function ensureStorageBucket() {
+  if (!supabase) return;
+  try {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    if (buckets && !buckets.find(b => b.name === 'uploads')) {
+      const { error } = await supabase.storage.createBucket('uploads', { public: true });
+      if (error) console.error('[storage] create bucket error:', error.message);
+      else console.log('[storage] uploads bucket created');
+    } else {
+      console.log('[storage] uploads bucket exists');
+    }
+  } catch (e) {
+    console.error('[storage] bucket check error:', e.message);
+  }
+}
+ensureStorageBucket();
 
 // Vercel export
 module.exports = app;
