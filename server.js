@@ -152,15 +152,18 @@ async function refreshContent() {
   }
 }
 
-// Save content to Supabase and update cache
+// Save content — update cache immediately, then sync to Supabase in background
 async function saveContent(incoming) {
-  if (supabase) {
-    const { error } = await supabase
-      .from('content')
-      .upsert({ id: 1, data: incoming }, { onConflict: 'id' });
-    if (error) throw error;
-  }
   contentCache = incoming;
+  if (supabase) {
+    supabase
+      .from('content')
+      .upsert({ id: 1, data: incoming }, { onConflict: 'id' })
+      .then(({ error }) => {
+        if (error) console.error('[supabase save error]', error.message);
+      })
+      .catch(err => console.error('[supabase save crash]', err.message));
+  }
   // Best-effort file backup (may fail on Vercel without affecting response)
   try {
     const backupDir = path.join(DATA_DIR, 'backups');
@@ -490,7 +493,6 @@ app.put('/api/admin/content', requireAdmin, async (req, res) => {
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
     return res.status(400).json({ error: 'Invalid content' });
   }
-
   try {
     await saveContent(incoming);
     res.json({ ok: true });
@@ -498,6 +500,23 @@ app.put('/api/admin/content', requireAdmin, async (req, res) => {
     console.error('[save error]', err.message);
     res.status(500).json({ error: 'Failed to save content' });
   }
+});
+
+// Diagnostic endpoint to check Supabase connectivity
+app.get('/api/admin/diag', requireAdmin, async (req, res) => {
+  const result = { supabase: !!supabase, cacheKeys: Object.keys(contentCache).length };
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('content').select('id').eq('id', 1).maybeSingle();
+      result.supabaseOk = !error;
+      result.supabaseError = error ? error.message : null;
+      result.supabaseData = data ? 'found' : 'empty';
+    } catch (e) {
+      result.supabaseOk = false;
+      result.supabaseError = e.message;
+    }
+  }
+  res.json(result);
 });
 
 // Image upload
