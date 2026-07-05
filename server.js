@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,13 @@ function getBaseUrl(req) {
   return `http://localhost:${PORT}`;
 }
 
+// ── Supabase config ──
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY 
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  : null;
+
 const DATA_DIR = IS_VERCEL ? '/tmp/data' : path.join(__dirname, 'data');
 const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
 const ENQUIRIES_FILE = path.join(DATA_DIR, 'enquiries.json');
@@ -26,7 +34,7 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // Seed content.json on Vercel (read-only filesystem, copy from repo to /tmp)
-if (IS_VERCEL) {
+if (IS_VERCEL && !supabase) {
   try {
     if (!fs.existsSync(CONTENT_FILE)) {
       const src = path.join(__dirname, 'data', 'content.json');
@@ -82,7 +90,21 @@ function escapeHtml(s) {
 function nl2br(s) {
   return escapeHtml(s).replace(/\r?\n/g, '<br>');
 }
-function getContent() {
+async function getContent() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('content')
+        .select('data')
+        .eq('id', 1)
+        .single();
+      if (error) throw error;
+      return data?.data || {};
+    } catch (err) {
+      console.error('[getContent error]', err.message);
+      return {};
+    }
+  }
   return readJson(CONTENT_FILE, {});
 }
 
@@ -174,11 +196,13 @@ function requireAdmin(req, res, next) {
 }
 
 // ── Public pages ──
-app.get('/', (req, res) => {
-  res.render('index', { c: getContent(), nl2br });
+app.get('/', async (req, res) => {
+  const c = await getContent();
+  res.render('index', { c, nl2br });
 });
-app.get('/team', (req, res) => {
-  res.render('team', { c: getContent(), nl2br });
+app.get('/team', async (req, res) => {
+  const c = await getContent();
+  res.render('team', { c, nl2br });
 });
 app.get('/index.html', (req, res) => res.redirect(301, '/'));
 app.get('/team.html', (req, res) => res.redirect(301, '/team'));
@@ -335,14 +359,38 @@ app.get('/api/admin/me', (req, res) => {
 });
 
 // Content
-app.get('/api/admin/content', requireAdmin, (req, res) => {
-  res.json(getContent());
+app.get('/api/admin/content', requireAdmin, async (req, res) => {
+  const content = await getContent();
+  res.json(content);
 });
-app.put('/api/admin/content', requireAdmin, (req, res) => {
+
+app.put('/api/admin/content', requireAdmin, async (req, res) => {
   const incoming = req.body;
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
     return res.status(400).json({ error: 'Invalid content' });
   }
+
+  if (supabase) {
+    // Save to Supabase
+    try {
+      const { error } = await supabase
+        .from('content')
+        .update({ 
+          data: incoming,
+          updated_at: new Date().toISOString(),
+          updated_by: req.session.user?.email || 'unknown'
+        })
+        .eq('id', 1);
+      if (error) throw error;
+      console.log('[Content saved to Supabase]', { by: req.session.user?.email });
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error('[Supabase save error]', err.message);
+      return res.status(500).json({ error: 'Failed to save content' });
+    }
+  }
+
+  // Fallback to file system (local dev)
   const backupDir = path.join(DATA_DIR, 'backups');
   fs.mkdirSync(backupDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
