@@ -122,30 +122,16 @@ if (!defaultContent || Object.keys(defaultContent).length === 0) {
 }
 
 
-async function getContent() {
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('content')
-        .select('data')
-        .eq('id', 1)
-        .single();
-      if (error) {
-        return defaultContent;
-      }
-      if (!data?.data || Object.keys(data.data).length === 0) {
-        return defaultContent;
-      }
-      return data.data;
-    } catch (err) {
-      return defaultContent;
-    }
-  }
-  return defaultContent;
+// Content cache - starts with defaultContent, refreshed from Supabase in background
+let contentCache = defaultContent;
+
+function getContent() {
+  return contentCache;
 }
 
-async function initializeContent() {
-  if (!supabase || Object.keys(defaultContent).length === 0) return;
+// Refresh content from Supabase in background (non-blocking)
+async function refreshContent() {
+  if (!supabase) return;
   try {
     const { data, error } = await supabase
       .from('content')
@@ -153,14 +139,38 @@ async function initializeContent() {
       .eq('id', 1)
       .single();
     if (error || !data?.data || Object.keys(data.data).length === 0) {
+      // Seed with default content if empty
       const result = await supabase
         .from('content')
         .upsert({ id: 1, data: defaultContent }, { onConflict: 'id' });
-      if (result.error) console.error('[seed]', result.error.message);
+      if (result.error) console.error('[refresh] seed error:', result.error.message);
+    } else {
+      contentCache = data.data;
     }
   } catch (err) {
-    console.error('[seed]', err.message);
+    console.error('[refresh]', err.message);
   }
+}
+
+// Save content to Supabase and update cache
+async function saveContent(incoming) {
+  if (supabase) {
+    const { error } = await supabase
+      .from('content')
+      .upsert({ id: 1, data: incoming }, { onConflict: 'id' });
+    if (error) throw error;
+  }
+  contentCache = incoming;
+  // Best-effort file backup (may fail on Vercel without affecting response)
+  try {
+    const backupDir = path.join(DATA_DIR, 'backups');
+    fs.mkdirSync(backupDir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, `content-${stamp}.json`)); } catch {}
+    const backups = fs.readdirSync(backupDir).filter(f => f.startsWith('content-')).sort();
+    while (backups.length > 20) fs.unlinkSync(path.join(backupDir, backups.shift()));
+  } catch {}
+  try { writeJson(CONTENT_FILE, incoming); } catch {}
 }
 
 // ── Consistent secret for sessions & signed cookies ──
@@ -481,34 +491,13 @@ app.put('/api/admin/content', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Invalid content' });
   }
 
-  if (supabase) {
-    // Save to Supabase using UPSERT (insert or update)
-    try {
-      const { error } = await supabase
-        .from('content')
-        .upsert({ 
-          id: 1,
-          data: incoming
-        }, { onConflict: 'id' });
-      if (error) throw error;
-      console.log('[Content saved to Supabase]', { by: req.session.user?.email });
-      return res.json({ ok: true });
-    } catch (err) {
-      console.error('[Supabase save error]', err.message);
-      return res.status(500).json({ error: 'Failed to save content' });
-    }
+  try {
+    await saveContent(incoming);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[save error]', err.message);
+    res.status(500).json({ error: 'Failed to save content' });
   }
-
-  // Fallback to file system (local dev)
-  const backupDir = path.join(DATA_DIR, 'backups');
-  fs.mkdirSync(backupDir, { recursive: true });
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, `content-${stamp}.json`)); } catch {}
-  const backups = fs.readdirSync(backupDir).filter(f => f.startsWith('content-')).sort();
-  while (backups.length > 20) fs.unlinkSync(path.join(backupDir, backups.shift()));
-
-  writeJson(CONTENT_FILE, incoming);
-  res.json({ ok: true });
 });
 
 // Image upload
@@ -566,8 +555,8 @@ app.use((req, res) => {
   res.status(404).send('<meta http-equiv="refresh" content="2;url=/"><body style="font-family:sans-serif;text-align:center;padding-top:20vh;background:#F0E7DE;color:#0B1842"><h1>404</h1><p>Page not found. Redirecting…</p></body>');
 });
 
-// Initialize content on startup
-initializeContent().catch(err => console.error('[startup] initializeContent failed:', err.message));
+// Refresh content cache from Supabase on startup (non-blocking)
+refreshContent().catch(err => console.error('[startup] refreshContent failed:', err.message));
 
 // Vercel export
 module.exports = app;
