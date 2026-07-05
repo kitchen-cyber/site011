@@ -124,12 +124,16 @@ app.use(cookieSession({
 
 // Middleware: verify admin status from email, not trusting session data
 function verifyAdminStatus(req, res, next) {
-  if (req.session.user) {
-    req.session.user.isAdmin = ADMIN_EMAILS.includes(String(req.session.user.email || '').toLowerCase());
-  }
-  // Debug: log all incoming requests with cookies
-  if (req.path.startsWith('/api/auth') || req.path === '/') {
-    console.log(`[${req.method} ${req.path}] session.user=${req.session.user ? req.session.user.email : 'EMPTY'}, cookies=${JSON.stringify(req.cookies)}, signedCookies=${Object.keys(req.signedCookies)}`);
+  try {
+    if (req.session.user) {
+      req.session.user.isAdmin = ADMIN_EMAILS.includes(String(req.session.user.email || '').toLowerCase());
+    }
+    // Debug: log all incoming requests with session
+    if (req.path.startsWith('/api/auth') || req.path === '/') {
+      console.log(`[${req.method} ${req.path}] session.user=${req.session.user ? req.session.user.email : 'EMPTY'}`);
+    }
+  } catch (err) {
+    console.error('[verifyAdminStatus error]', err.message);
   }
   next();
 }
