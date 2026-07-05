@@ -615,10 +615,31 @@ app.post('/api/admin/upload', requireAdmin, async (req, res) => {
       console.error('[Local save error]', e.message);
     }
 
-    // Commit to GitHub for permanent persistence
+    // Commit photo to GitHub for permanent persistence
     await commitToGithub('public/uploads/' + filename, req.file.buffer);
 
-    // Serve URL: use local path; GitHub URL will work after deploy
+    // Server-side content update: update the content path with new URL and save atomically
+    var contentPath = req.query.path || '';
+    if (contentPath) {
+      var pathArr = contentPath.split('.');
+      var ptr = contentCache;
+      var valid = true;
+      for (var i = 0; i < pathArr.length - 1; i++) {
+        if (ptr[pathArr[i]] === undefined || ptr[pathArr[i]] === null) { valid = false; break; }
+        ptr = ptr[pathArr[i]];
+      }
+      if (valid) {
+        ptr[pathArr[pathArr.length - 1]] = '/uploads/' + filename;
+        try {
+          var buf = Buffer.from(JSON.stringify(contentCache, null, 2), 'utf-8');
+          await commitToGithub('data/content.json', buf);
+        } catch (e) {
+          console.error('[Content save after upload]', e.message);
+        }
+        try { writeJson(CONTENT_FILE, contentCache); } catch (e) {}
+      }
+    }
+
     res.json({ ok: true, url: '/uploads/' + filename });
   });
 });
@@ -627,6 +648,45 @@ app.post('/api/admin/upload', requireAdmin, async (req, res) => {
 if (IS_VERCEL) {
   app.use('/uploads', express.static(UPLOADS_DIR));
 }
+
+// Enquiries stats
+function computeEnquiryStats(enquiries) {
+  var stats = {
+    total: enquiries.length,
+    byStatus: {},
+    byEventType: {},
+    byMonth: {},
+    newest: null,
+    oldest: null
+  };
+  var statuses = ['new', 'contacted', 'quoted', 'confirmed', 'archived'];
+  statuses.forEach(function(s) { stats.byStatus[s] = 0; });
+  enquiries.forEach(function(e) {
+    if (stats.byStatus[e.status] !== undefined) stats.byStatus[e.status]++;
+    var type = (e.eventType || 'Other').trim();
+    stats.byEventType[type] = (stats.byEventType[type] || 0) + 1;
+    if (e.createdAt) {
+      var month = e.createdAt.slice(0, 7);
+      stats.byMonth[month] = (stats.byMonth[month] || 0) + 1;
+    }
+  });
+  if (enquiries.length > 0) {
+    var sorted = enquiries.slice().sort(function(a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
+    stats.oldest = sorted[0].createdAt;
+    stats.newest = sorted[sorted.length - 1].createdAt;
+  }
+  return stats;
+}
+
+app.get('/api/admin/enquiries/stats', requireAdmin, async (req, res) => {
+  var enquiries = readJson(ENQUIRIES_FILE, []);
+  var stats = computeEnquiryStats(enquiries);
+  try {
+    var buf = Buffer.from(JSON.stringify(stats, null, 2), 'utf-8');
+    await commitToGithub('data/stats.json', buf);
+  } catch (e) { /* stats commit best-effort */ }
+  res.json(stats);
+});
 
 // Enquiries
 app.get('/api/admin/enquiries', requireAdmin, (req, res) => {

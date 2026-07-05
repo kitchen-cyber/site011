@@ -343,6 +343,25 @@ body {
 .dirty-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue-mid); display: none; }
 .dirty .dirty-dot { display: block; }
 
+/* ── Stats ── */
+.stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.stat-card {
+  background: var(--white);
+  border: 1px solid rgba(11,24,66,0.08);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  flex: 1;
+  min-width: 100px;
+  box-shadow: 0 2px 8px rgba(11,24,66,0.04);
+  text-align: center;
+}
+.stat-card .num { font-family: var(--font-serif); font-size: 28px; font-weight: 400; color: var(--blue-mid); }
+.stat-card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(11,24,66,0.45); margin-top: 4px; }
+.stat-breakdown { display: flex; gap: 4px 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.stat-breakdown span { font-size: 12px; }
+.stat-breakdown .num { font-size: 14px; }
+.stat-breakdown .label { font-size: 10px; }
+
 /* ── Enquiries ── */
 .enquiry-card {
   background: var(--white);
@@ -444,6 +463,7 @@ body {
       <div id="contentEditor"></div>
     </div>
     <div class="panel" id="panel-enquiries">
+      <div id="enquiriesStats"></div>
       <div id="enquiriesList"></div>
     </div>
   </div>
@@ -586,6 +606,7 @@ function getByPath(obj, pathArr) {
 function markDirty() {
   dirty = true;
   document.getElementById('savebar').classList.add('dirty');
+  document.getElementById('btnSave').disabled = false;
   document.getElementById('saveStatus').textContent = '';
 }
 
@@ -631,22 +652,14 @@ function renderStringField(container, pathArr, key, value) {
       fd.append('image', file.files[0]);
       try {
         var oldUrl = encodeURIComponent(input.value);
-        const res = await fetch('/api/admin/upload?oldUrl=' + oldUrl, { method: 'POST', body: fd });
+        var pathStr = encodeURIComponent(pathArr.join('.'));
+        const res = await fetch('/api/admin/upload?oldUrl=' + oldUrl + '&path=' + pathStr, { method: 'POST', body: fd });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Upload failed');
         input.value = json.url;
         preview.src = json.url;
         preview.style.opacity = '1';
         setByPath(content, pathArr, json.url);
-        // Auto-save content after photo upload
-        const saveRes = await fetch('/api/admin/content', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(content)
-        });
-        if (!saveRes.ok) { const e = await saveRes.json().catch(() => {}); throw new Error(e?.error || 'Auto-save failed'); }
-        dirty = false;
-        document.getElementById('savebar').classList.remove('dirty');
         document.getElementById('saveStatus').textContent = '✓ Photo saved and published';
         document.getElementById('saveStatus').className = 'save-status ok';
       } catch (e) {
@@ -788,6 +801,7 @@ async function loadContent() {
     details.appendChild(body);
     editor.appendChild(details);
   }
+  document.getElementById('btnSave').disabled = true;
 }
 
 document.getElementById('btnSave').addEventListener('click', async () => {
@@ -808,10 +822,9 @@ document.getElementById('btnSave').addEventListener('click', async () => {
     status.textContent = '✓ Saved. Changes are live on the site.';
     status.classList.add('ok');
   } catch (e) {
+    btn.disabled = false;
     status.textContent = 'Save error: ' + e.message;
     status.classList.add('err');
-  } finally {
-    btn.disabled = false;
   }
 });
 
@@ -821,12 +834,48 @@ window.addEventListener('beforeunload', (e) => {
 
 /* ─────────── Enquiries ─────────── */
 async function loadEnquiries() {
-  const list = await fetch('/api/admin/enquiries').then(r => r.json());
+  const [list, stats] = await Promise.all([
+    fetch('/api/admin/enquiries').then(r => r.json()),
+    fetch('/api/admin/enquiries/stats').then(r => r.json())
+  ]);
   const holder = document.getElementById('enquiriesList');
   const badge = document.getElementById('enquiryBadge');
   const newCount = list.filter(e => e.status === 'new').length;
   badge.textContent = newCount;
   badge.style.display = newCount > 0 ? 'inline' : 'none';
+
+  // Stats dashboard
+  const statsEl = document.getElementById('enquiriesStats');
+  var statHtml = '<div class="stats-row">';
+  statHtml += '<div class="stat-card"><div class="num">' + stats.total + '</div><div class="label">Total</div></div>';
+  statHtml += '<div class="stat-card"><div class="num">' + (stats.byStatus?.new || 0) + '</div><div class="label">New</div></div>';
+  statHtml += '<div class="stat-card"><div class="num">' + (stats.byStatus?.contacted || 0) + '</div><div class="label">Contacted</div></div>';
+  statHtml += '<div class="stat-card"><div class="num">' + (stats.byStatus?.quoted || 0) + '</div><div class="label">Quoted</div></div>';
+  statHtml += '<div class="stat-card"><div class="num">' + (stats.byStatus?.confirmed || 0) + '</div><div class="label">Confirmed</div></div>';
+  statHtml += '<div class="stat-card"><div class="num">' + (stats.byStatus?.archived || 0) + '</div><div class="label">Archived</div></div>';
+  statHtml += '</div>';
+
+  // Event type breakdown
+  var types = Object.entries(stats.byEventType || {}).sort(function(a, b) { return b[1] - a[1]; });
+  if (types.length > 0) {
+    statHtml += '<div class="stat-card" style="margin-bottom:20px"><div class="label">By Event Type</div><div class="stat-breakdown">';
+    types.forEach(function(t) {
+      statHtml += '<span><strong class="num">' + t[1] + '</strong> <span class="label">' + esc(t[0]) + '</span></span>';
+    });
+    statHtml += '</div></div>';
+  }
+
+  // Monthly breakdown (last 6 months)
+  var months = Object.entries(stats.byMonth || {}).sort(function(a, b) { return a[0] < b[0] ? 1 : -1; }).slice(0, 6);
+  if (months.length > 0) {
+    statHtml += '<div class="stat-card" style="margin-bottom:20px"><div class="label">Recent Months</div><div class="stat-breakdown">';
+    months.forEach(function(m) {
+      statHtml += '<span><strong class="num">' + m[1] + '</strong> <span class="label">' + esc(m[0]) + '</span></span>';
+    });
+    statHtml += '</div></div>';
+  }
+
+  statsEl.innerHTML = statHtml;
 
   if (!list.length) {
     holder.innerHTML = '<div class="empty-state">No enquiries yet.<br>When someone submits the contact form, they will appear here.</div>';
