@@ -105,7 +105,11 @@ function escapeHtml(s) {
 function nl2br(s) {
   return escapeHtml(s).replace(/\r?\n/g, '<br>');
 }
+// Load default content from file at startup
+let defaultContent = readJson(CONTENT_FILE, {});
+
 async function getContent() {
+  // Always return at least the default content
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -113,14 +117,21 @@ async function getContent() {
         .select('data')
         .eq('id', 1)
         .single();
-      if (error) throw error;
-      return data?.data || {};
+      if (error) {
+        console.warn('[getContent] Supabase error, using fallback');
+        return defaultContent;
+      }
+      if (!data?.data) {
+        console.warn('[getContent] No data from Supabase, using fallback');
+        return defaultContent;
+      }
+      return data.data;
     } catch (err) {
       console.error('[getContent error]', err.message);
-      return {};
+      return defaultContent;
     }
   }
-  return readJson(CONTENT_FILE, {});
+  return defaultContent;
 }
 
 // ── Consistent secret for sessions & signed cookies ──
