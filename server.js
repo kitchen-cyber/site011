@@ -4,6 +4,7 @@ const cookieSession = require('cookie-session');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
@@ -25,6 +26,86 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY 
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   : null;
+
+// ── GitHub config (for photo persistence) ──
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const GITHUB_REPO = 'kitchen-cyber/site011';
+const GITHUB_BRANCH = 'main';
+
+// ── Helper: Supabase REST via https.request (avoids fetch() ByteString bug) ──
+function supabaseRequest(method, path, bodyBytes) {
+  return new Promise(function(resolve, reject) {
+    var u = new URL(SUPABASE_URL + path);
+    var opts = {
+      hostname: u.hostname,
+      port: 443,
+      path: u.pathname + u.search,
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY
+      }
+    };
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+      opts.headers['Prefer'] = 'resolution=merge-duplicates';
+    }
+    if (bodyBytes) opts.headers['Content-Length'] = bodyBytes.length;
+    var req = https.request(opts, function(res) {
+      var data = '';
+      res.on('data', function(c) { data += c; });
+      res.on('end', function() {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try { resolve(JSON.parse(data)); } catch (e) { resolve(data); }
+        } else {
+          reject(new Error('HTTP ' + res.statusCode + ': ' + data.slice(0, 300)));
+        }
+      });
+    });
+    req.on('error', reject);
+    if (bodyBytes) req.write(bodyBytes);
+    req.end();
+  });
+}
+
+// ── Helper: commit a file to GitHub repo ──
+async function commitToGithub(filename, buffer) {
+  if (!GITHUB_TOKEN) return null;
+  var content = buffer.toString('base64');
+  var filepath = 'public/uploads/' + filename;
+  var apiUrl = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + filepath;
+
+  // Check if file exists (to get SHA for update)
+  var sha = null;
+  try {
+    var getRes = await fetch(apiUrl + '?ref=' + GITHUB_BRANCH, {
+      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'User-Agent': 'raqt-fuel' }
+    });
+    if (getRes.ok) {
+      var existing = await getRes.json();
+      sha = existing.sha;
+    }
+  } catch (e) {}
+
+  // Create or update file
+  var body = { message: 'Add photo ' + filename, content: content, branch: GITHUB_BRANCH };
+  if (sha) body.sha = sha;
+  var putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': 'Bearer ' + GITHUB_TOKEN,
+      'Content-Type': 'application/json',
+      'User-Agent': 'raqt-fuel'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!putRes.ok) {
+    var errText = await putRes.text().catch(function() { return ''; });
+    console.error('[GitHub upload error]', putRes.status, errText.slice(0, 200));
+    return null;
+  }
+  return '/uploads/' + filename;
+}
 
 // ── Email config (Resend) ──
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
@@ -134,32 +215,14 @@ function getContent() {
 async function refreshContent() {
   if (!supabase || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/content?id=eq.1&select=data', {
-      headers: {
-        'apikey': SUPABASE_SERVICE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY
-      }
-    });
-    if (res.ok) {
-      const rows = await res.json();
-      if (rows && rows.length > 0 && rows[0].data && Object.keys(rows[0].data).length > 0) {
-        contentCache = rows[0].data;
-        return;
-      }
+    var rows = await supabaseRequest('GET', '/rest/v1/content?id=eq.1&select=data');
+    if (rows && rows.length > 0 && rows[0].data && Object.keys(rows[0].data).length > 0) {
+      contentCache = rows[0].data;
+      return;
     }
     // Seed with default content if empty
-    var encoder = new TextEncoder();
-    var bodyBytes = encoder.encode(JSON.stringify({ id: 1, data: defaultContent }));
-    await fetch(SUPABASE_URL + '/rest/v1/content', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_SERVICE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: bodyBytes
-    });
+    var bodyBytes = Buffer.from(JSON.stringify({ id: 1, data: defaultContent }), 'utf-8');
+    await supabaseRequest('POST', '/rest/v1/content', bodyBytes);
   } catch (err) {
     console.error('[refresh]', err.message);
   }
@@ -168,40 +231,25 @@ async function refreshContent() {
 // Save content — update cache immediately, then sync to Supabase
 async function saveContent(incoming) {
   contentCache = incoming;
-  let supabaseError = null;
+  var supabaseError = null;
   if (supabase && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
     try {
-      // Pre-encode JSON as UTF-8 bytes to avoid fetch() encoding issues with Unicode
-      const encoder = new TextEncoder();
-      const bodyBytes = encoder.encode(JSON.stringify({ id: 1, data: incoming }));
-      const res = await fetch(SUPABASE_URL + '/rest/v1/content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_SERVICE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: bodyBytes
-      });
-      if (!res.ok) {
-        const errText = await res.text().catch(function() { return ''; });
-        supabaseError = 'HTTP ' + res.status + ': ' + errText.slice(0, 200);
-      }
+      var bodyBytes = Buffer.from(JSON.stringify({ id: 1, data: incoming }), 'utf-8');
+      await supabaseRequest('POST', '/rest/v1/content', bodyBytes);
     } catch (err) {
       supabaseError = err.message;
     }
   }
   // Best-effort file backup (may fail on Vercel without affecting response)
   try {
-    const backupDir = path.join(DATA_DIR, 'backups');
+    var backupDir = path.join(DATA_DIR, 'backups');
     fs.mkdirSync(backupDir, { recursive: true });
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, 'content-' + stamp + '.json')); } catch {}
-    const backups = fs.readdirSync(backupDir).filter(function(f) { return f.startsWith('content-'); }).sort();
+    var stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, 'content-' + stamp + '.json')); } catch (e) {}
+    var backups = fs.readdirSync(backupDir).filter(function(f) { return f.startsWith('content-'); }).sort();
     while (backups.length > 20) fs.unlinkSync(path.join(backupDir, backups.shift()));
-  } catch {}
-  try { writeJson(CONTENT_FILE, incoming); } catch {}
+  } catch (e) {}
+  try { writeJson(CONTENT_FILE, incoming); } catch (e) {}
   if (supabaseError) throw new Error('Supabase save failed: ' + supabaseError);
 }
 
@@ -570,54 +618,37 @@ app.get('/api/admin/diag', requireAdmin, async (req, res) => {
   res.json(result);
 });
 
-// Image upload — saves to Supabase Storage (or local fallback)
+// Image upload — saves locally and commits to GitHub for permanent persistence
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ok = /^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/.test(file.mimetype);
+  fileFilter: function(req, file, cb) {
+    var ok = /^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/.test(file.mimetype);
     cb(ok ? null : new Error('Only image files are allowed'), ok);
   }
 });
-const STORAGE_BUCKET = 'uploads';
-const SUPABASE_STORAGE_URL = SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}` : null;
 
 app.post('/api/admin/upload', requireAdmin, async (req, res) => {
-  upload.single('image')(req, res, async (err) => {
+  upload.single('image')(req, res, async function(err) {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file' });
 
-    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
-    const filename = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}${ext}`;
+    var ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+    var filename = Date.now() + '-' + crypto.randomBytes(4).toString('hex') + ext;
 
-    // Upload to Supabase Storage
-    if (supabase && SUPABASE_STORAGE_URL) {
-      try {
-        const { error } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .upload(filename, req.file.buffer, {
-            contentType: req.file.mimetype,
-            upsert: true
-          });
-        if (error) throw error;
-        const url = `${SUPABASE_STORAGE_URL}/${filename}`;
-        return res.json({ ok: true, url });
-      } catch (e) {
-        console.error('[Storage upload error]', e.message);
-        // Fall through to local fallback
-      }
-    }
-
-    // Local fallback
+    // Save locally (immediate access)
     try {
-      const dest = path.join(UPLOADS_DIR, filename);
+      var dest = path.join(UPLOADS_DIR, filename);
       fs.writeFileSync(dest, req.file.buffer);
-      console.log('[Upload saved locally]', dest);
-      res.json({ ok: true, url: `/uploads/${filename}` });
     } catch (e) {
-      console.error('[Local upload error]', e.message);
-      res.status(500).json({ error: 'Upload failed' });
+      console.error('[Local save error]', e.message);
     }
+
+    // Commit to GitHub for permanent persistence
+    var ghUrl = await commitToGithub(filename, req.file.buffer);
+
+    // Serve URL: use local path; GitHub URL will work after deploy
+    res.json({ ok: true, url: '/uploads/' + filename });
   });
 });
 
@@ -654,25 +685,7 @@ app.use((req, res) => {
 });
 
 // Initialize content from Supabase before first request
-contentInitPromise = refreshContent().catch(err => console.error('[startup] refreshContent failed:', err.message));
-
-// Ensure Supabase storage bucket exists (non-blocking)
-async function ensureStorageBucket() {
-  if (!supabase) return;
-  try {
-    const { data: buckets } = await supabase.storage.listBuckets();
-    if (buckets && !buckets.find(b => b.name === 'uploads')) {
-      const { error } = await supabase.storage.createBucket('uploads', { public: true });
-      if (error) console.error('[storage] create bucket error:', error.message);
-      else console.log('[storage] uploads bucket created');
-    } else {
-      console.log('[storage] uploads bucket exists');
-    }
-  } catch (e) {
-    console.error('[storage] bucket check error:', e.message);
-  }
-}
-ensureStorageBucket();
+contentInitPromise = refreshContent().catch(function(err) { console.error('[startup] refreshContent failed:', err.message); });
 
 // Vercel export
 module.exports = app;
