@@ -122,8 +122,9 @@ if (!defaultContent || Object.keys(defaultContent).length === 0) {
 }
 
 
-// Content cache - starts with defaultContent, refreshed from Supabase in background
+// Content cache - starts with defaultContent, refreshed from Supabase
 let contentCache = defaultContent;
+let contentInitPromise = null;
 
 function getContent() {
   return contentCache;
@@ -241,6 +242,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Wait for content to load from Supabase before first request
+app.use(async (req, res, next) => {
+  if (contentInitPromise) {
+    await contentInitPromise;
+    contentInitPromise = null;
+  }
+  next();
+});
+
 // Middleware: verify admin status from email, not trusting session data
 function verifyAdminStatus(req, res, next) {
   try {
@@ -292,6 +302,19 @@ app.get('/team', async (req, res) => {
 });
 app.get('/index.html', (req, res) => res.redirect(301, '/'));
 app.get('/team.html', (req, res) => res.redirect(301, '/team'));
+app.get('/privacy', async (req, res) => {
+  try {
+    const c = await getContent();
+    if (!c || Object.keys(c).length === 0) {
+      console.error('[GET /privacy] ERROR: getContent returned empty object');
+      return res.status(500).json({ error: 'Content not available' });
+    }
+    res.render('privacy', { c, nl2br });
+  } catch (err) {
+    console.error('[GET /privacy] ERROR:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Public API: enquiry form ──
 app.post('/api/enquiry', async (req, res) => {
@@ -602,8 +625,8 @@ app.use((req, res) => {
   res.status(404).send('<meta http-equiv="refresh" content="2;url=/"><body style="font-family:sans-serif;text-align:center;padding-top:20vh;background:#F0E7DE;color:#0B1842"><h1>404</h1><p>Page not found. Redirecting…</p></body>');
 });
 
-// Refresh content cache from Supabase on startup (non-blocking)
-refreshContent().catch(err => console.error('[startup] refreshContent failed:', err.message));
+// Initialize content from Supabase before first request
+contentInitPromise = refreshContent().catch(err => console.error('[startup] refreshContent failed:', err.message));
 
 // Ensure Supabase storage bucket exists (non-blocking)
 async function ensureStorageBucket() {
