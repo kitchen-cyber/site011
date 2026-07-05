@@ -148,11 +148,8 @@ async function refreshContent() {
       }
     }
     // Seed with default content if empty
-    const payload = { id: 1, data: defaultContent };
-    const jsonStr = JSON.stringify(payload);
-    const safeJson = jsonStr.replace(/[\u0080-\uFFFF]/g, function(c) {
-      return '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0');
-    });
+    var encoder = new TextEncoder();
+    var bodyBytes = encoder.encode(JSON.stringify({ id: 1, data: defaultContent }));
     await fetch(SUPABASE_URL + '/rest/v1/content', {
       method: 'POST',
       headers: {
@@ -161,7 +158,7 @@ async function refreshContent() {
         'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
         'Prefer': 'resolution=merge-duplicates'
       },
-      body: safeJson
+      body: bodyBytes
     });
   } catch (err) {
     console.error('[refresh]', err.message);
@@ -174,12 +171,10 @@ async function saveContent(incoming) {
   let supabaseError = null;
   if (supabase && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
     try {
-      // Use raw fetch with manually escaped JSON to avoid Unicode encoding issues
-      const payload = { id: 1, data: incoming };
-      const jsonStr = JSON.stringify(payload);
-      // Escape non-ASCII chars to \uXXXX for safe transport
-      const safeJson = jsonStr.replace(/[\u0080-\uFFFF]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/content`, {
+      // Pre-encode JSON as UTF-8 bytes to avoid fetch() encoding issues with Unicode
+      const encoder = new TextEncoder();
+      const bodyBytes = encoder.encode(JSON.stringify({ id: 1, data: incoming }));
+      const res = await fetch(SUPABASE_URL + '/rest/v1/content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,10 +182,10 @@ async function saveContent(incoming) {
           'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
           'Prefer': 'resolution=merge-duplicates'
         },
-        body: safeJson
+        body: bodyBytes
       });
       if (!res.ok) {
-        const errText = await res.text().catch(() => '');
+        const errText = await res.text().catch(function() { return ''; });
         supabaseError = 'HTTP ' + res.status + ': ' + errText.slice(0, 200);
       }
     } catch (err) {
