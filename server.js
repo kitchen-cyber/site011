@@ -104,12 +104,22 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
 app.use(cookieParser(SESSION_SECRET));
 app.use(cookieSession({
   name: 'raqt.sid',
-  secret: SESSION_SECRET,
+  keys: [SESSION_SECRET],
   httpOnly: true,
   sameSite: 'lax',
   secure: IS_PROD,
-  maxAge: 1000 * 60 * 60 * 24 * 7
+  maxAge: 1000 * 60 * 60 * 24 * 7,
+  signed: false  // Unsigned cookies work reliably on serverless (session data is base64 JSON)
 }));
+
+// Middleware: verify admin status from email, not trusting session data
+function verifyAdminStatus(req, res, next) {
+  if (req.session.user) {
+    req.session.user.isAdmin = ADMIN_EMAILS.includes(String(req.session.user.email || '').toLowerCase());
+  }
+  next();
+}
+app.use(verifyAdminStatus);
 
 function requireAdmin(req, res, next) {
   if (req.session.user && req.session.user.isAdmin) return next();
