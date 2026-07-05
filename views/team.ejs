@@ -699,11 +699,14 @@ footer a:hover { color: var(--gold); }
   </div>
 </div>
 <script>
-if (sessionStorage.getItem('visited')) {
-  document.getElementById('preloader').classList.add('skip');
-} else {
-  sessionStorage.setItem('visited', '1');
-}
+(function() {
+  var p = document.getElementById('preloader');
+  var minShow = new Promise(function(r) { setTimeout(r, 2000); });
+  var pageLoaded = new Promise(function(r) { window.addEventListener('load', r); });
+  Promise.all([minShow, pageLoaded]).then(function() {
+    setTimeout(function() { p.classList.add('loaded'); }, 400);
+  });
+})();
 </script>
 
 <div class="nav-wrap">
@@ -804,10 +807,7 @@ if (sessionStorage.getItem('visited')) {
 </div>
 
 <script>
-// Preloader
-window.addEventListener('load', () => {
-  setTimeout(() => document.getElementById('preloader').classList.add('loaded'), 600);
-});
+// Preloader is handled inline
 
 // Nav scroll effect
 const navWrap = document.querySelector('.nav-wrap');

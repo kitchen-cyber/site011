@@ -1429,12 +1429,15 @@ footer a:hover { color: var(--gold); }
   </div>
 </div>
 <script>
-// Show preloader only on first visit this session
-if (sessionStorage.getItem('visited')) {
-  document.getElementById('preloader').classList.add('skip');
-} else {
-  sessionStorage.setItem('visited', '1');
-}
+// Show preloader on every visit with minimum display time
+(function() {
+  var p = document.getElementById('preloader');
+  var minShow = new Promise(function(r) { setTimeout(r, 2000); });
+  var pageLoaded = new Promise(function(r) { window.addEventListener('load', r); });
+  Promise.all([minShow, pageLoaded]).then(function() {
+    setTimeout(function() { p.classList.add('loaded'); }, 400);
+  });
+})();
 </script>
 
 <div class="nav-wrap">
@@ -1753,12 +1756,7 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 window.addEventListener('resize', updateGallery);
 
-// Preloader
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('preloader').classList.add('loaded');
-  }, 600);
-});
+// Preloader is handled inline (see script near preloader HTML)
 
 // Scroll reveal
 const observer = new IntersectionObserver((entries) => {
