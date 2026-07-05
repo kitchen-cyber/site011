@@ -308,7 +308,8 @@ app.post('/auth/dev-login', (req, res) => {
 });
 
 app.post('/auth/logout', (req, res) => {
-  req.session = null;
+  req.session = {}; // Clear session (middleware will remove cookie)
+  res.clearCookie('raqt_sid', { path: '/' });
   res.json({ ok: true });
 });
 
