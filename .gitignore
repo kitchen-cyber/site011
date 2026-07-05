@@ -9,3 +9,5 @@ repo_site011/
 server.log
 server.err.log
 _legacy/
+cookies.txt
+*.tmp
