@@ -791,7 +791,7 @@ document.getElementById('btnSave').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(content)
     });
-    if (!res.ok) throw new Error('Save failed');
+    if (!res.ok) { const body = await res.json().catch(() => {}); throw new Error(body?.error || 'Save failed'); }
     dirty = false;
     document.getElementById('savebar').classList.remove('dirty');
     status.textContent = '✓ Saved. Changes are live on the site.';
