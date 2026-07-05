@@ -387,7 +387,7 @@ app.post('/api/enquiry', async (req, res) => {
       try {
         await resend.emails.send({
           from: 'onboarding@resend.dev',
-          to: ADMIN_EMAIL,
+          to: 'kitchen@table42.co.uk',
           replyTo: enquiry.email,
           subject: `New Enquiry from ${enquiry.firstName} ${enquiry.lastName}`,
           html: `
