@@ -176,7 +176,6 @@ async function fetchContentFromGithub() {
       if (data && Object.keys(data).length > 0) {
         contentCache = data;
         console.log('[GitHub content] Loaded from repo');
-        // Sync to local file
         try { writeJson(CONTENT_FILE, data); } catch (e) {}
         return;
       }
@@ -185,6 +184,7 @@ async function fetchContentFromGithub() {
     console.log('[GitHub content] Not available, using embedded default');
   }
 }
+var contentInitPromise = fetchContentFromGithub();
 
 // Save content — update cache immediately, then persist to GitHub
 async function saveContent(incoming) {
@@ -271,6 +271,15 @@ app.use((req, res, next) => {
     originalEnd(...args);
   };
   
+  next();
+});
+
+// Wait for content to load from GitHub before first request (prevents stale cache on cold start)
+app.use(async (req, res, next) => {
+  if (contentInitPromise) {
+    await contentInitPromise;
+    contentInitPromise = null;
+  }
   next();
 });
 
@@ -642,9 +651,6 @@ app.delete('/api/admin/enquiries/:id', requireAdmin, (req, res) => {
 app.use((req, res) => {
   res.status(404).send('<meta http-equiv="refresh" content="2;url=/"><body style="font-family:sans-serif;text-align:center;padding-top:20vh;background:#F0E7DE;color:#0B1842"><h1>404</h1><p>Page not found. Redirecting…</p></body>');
 });
-
-// Fetch latest content from GitHub on startup (non-blocking)
-fetchContentFromGithub();
 
 // Vercel export
 module.exports = app;
