@@ -510,16 +510,16 @@ app.put('/api/admin/content', requireAdmin, async (req, res) => {
   }
 
   if (supabase) {
-    // Save to Supabase
+    // Save to Supabase using UPSERT (insert or update)
     try {
       const { error } = await supabase
         .from('content')
-        .update({ 
+        .upsert({ 
+          id: 1,
           data: incoming,
           updated_at: new Date().toISOString(),
           updated_by: req.session.user?.email || 'unknown'
-        })
-        .eq('id', 1);
+        }, { onConflict: 'id' });
       if (error) throw error;
       console.log('[Content saved to Supabase]', { by: req.session.user?.email });
       return res.json({ ok: true });
