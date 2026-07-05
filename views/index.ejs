@@ -1661,6 +1661,20 @@ fetch('/api/auth/status').then(r => r.json()).then(data => {
   }
 });
 
+// Show error banner if URL has ?error=
+const urlErr = new URLSearchParams(location.search).get('error');
+if (urlErr && urlErr !== 'oauth_not_configured') {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;background:#0B1842;color:#F0E7DE;padding:16px 24px;border-radius:8px;font-size:14px;text-align:center;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,0.3)';
+  if (urlErr === 'auth_failed' || urlErr === 'oauth_failed') {
+    banner.innerHTML = 'Google login failed. <a href="/admin" style="color:#D4C5B2;text-decoration:underline">Go to Admin Panel for setup instructions</a>';
+  } else {
+    banner.textContent = 'Login error: ' + urlErr;
+  }
+  document.body.prepend(banner);
+  setTimeout(() => banner.remove(), 10000);
+}
+
 // Cookie consent
 const cookieOverlay = document.getElementById('cookie-overlay');
 const cookieAccept = document.getElementById('cookieAccept');

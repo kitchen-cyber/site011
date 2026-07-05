@@ -148,10 +148,13 @@ app.post('/api/enquiry', (req, res) => {
 app.get('/auth/google', (req, res) => {
   if (!OAUTH_CONFIGURED) {
     if (!IS_PROD) {
+      // Local dev: auto-login as admin (skip Google)
       req.session.user = { email: 'dev@localhost', name: 'Dev Admin', picture: '', isAdmin: true };
       return res.redirect('/');
     }
-    return res.redirect('/?error=oauth_not_configured');
+    // Production without OAuth: show setup instructions
+    const baseUrl = getBaseUrl(req);
+    return res.redirect(`/admin?setup=1&uri=${encodeURIComponent(baseUrl + '/auth/google/callback')}`);
   }
   const state = crypto.randomBytes(16).toString('hex');
   req.session.oauthState = state;
@@ -170,6 +173,10 @@ app.get('/auth/google', (req, res) => {
 app.get('/auth/google/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
+    // If Google sent back an error (e.g. redirect_uri mismatch)
+    if (req.query.error) {
+      return res.redirect(`/admin?setup=1&uri=${encodeURIComponent(getBaseUrl(req) + '/auth/google/callback')}&error=${req.query.error}`);
+    }
     if (!code || !state || state !== req.session.oauthState) {
       return res.redirect('/?error=auth_failed');
     }
@@ -210,7 +217,7 @@ app.get('/auth/google/callback', async (req, res) => {
     res.redirect('/');
   } catch (err) {
     console.error('OAuth error:', err.message);
-    res.redirect('/?error=auth_failed');
+    res.redirect('/?error=oauth_failed');
   }
 });
 

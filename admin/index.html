@@ -520,6 +520,13 @@ async function init() {
       el.textContent = map[err] || 'Login error.';
       el.classList.add('show');
     }
+    const setup = params.get('setup');
+    if (setup === '1') {
+      const uri = params.get('uri') || '';
+      const el = document.getElementById('loginError');
+      el.innerHTML = '<strong>Google OAuth setup required</strong><br><br>Add this redirect URL to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--ink)">Google Cloud Console</a>:<br><br><code style="display:block;background:var(--cream);padding:10px;border-radius:4px;font-size:13px;word-break:break-all;margin-top:8px">' + esc(uri) + '</code><br>Then set <b>GOOGLE_CLIENT_ID</b>, <b>GOOGLE_CLIENT_SECRET</b>, <b>ADMIN_EMAILS</b> in Vercel environment variables.';
+      el.classList.add('show');
+    }
   }
 }
 document.getElementById('btnDevLogin').addEventListener('click', async () => {
