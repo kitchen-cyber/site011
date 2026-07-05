@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cookieSession = require('cookie-session');
-const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -94,6 +93,18 @@ if (!process.env.SESSION_SECRET && IS_PROD) {
   console.warn('[CRITICAL] Run: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
 }
 
+// Helper: parse cookies from request
+function parseCookies(req) {
+  const cookies = {};
+  if (req.headers.cookie) {
+    req.headers.cookie.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      if (name && value) cookies[name] = decodeURIComponent(value);
+    });
+  }
+  return cookies;
+}
+
 // ── App setup ──
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -101,7 +112,6 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
-app.use(cookieParser(SESSION_SECRET));
 app.use(cookieSession({
   name: 'raqt.sid',
   keys: [SESSION_SECRET],
@@ -178,8 +188,8 @@ app.get('/auth/google', (req, res) => {
     return res.redirect(`/admin?setup=1&uri=${encodeURIComponent(baseUrl + '/auth/google/callback')}`);
   }
   const state = crypto.randomBytes(16).toString('hex');
-  // Store state in signed cookie (works on serverless Vercel)
-  res.cookie('oauth_state', state, { signed: true, httpOnly: true, sameSite: 'lax', secure: IS_PROD, maxAge: 5 * 60 * 1000 });
+  // Store state in simple cookie (no signing issues on serverless)
+  res.cookie('oauth_state', state, { httpOnly: true, sameSite: 'lax', secure: IS_PROD, maxAge: 5 * 60 * 1000 });
   console.log('[OAuth Start] State cookie set:', state);
   const baseUrl = getBaseUrl(req);
   const params = new URLSearchParams({
@@ -196,18 +206,19 @@ app.get('/auth/google', (req, res) => {
 app.get('/auth/google/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
+    const cookies = parseCookies(req);
+    const stateFromCookie = cookies.oauth_state;
     console.log('[OAuth Callback]', {
       state_from_query: state,
-      state_from_cookie: req.signedCookies.oauth_state,
-      all_cookies: Object.keys(req.cookies),
-      all_signed_cookies: Object.keys(req.signedCookies)
+      state_from_cookie: stateFromCookie,
+      all_raw_cookies: Object.keys(cookies)
     });
     if (req.query.error) {
       return res.redirect(`/admin?setup=1&uri=${encodeURIComponent(getBaseUrl(req) + '/auth/google/callback')}&error=${req.query.error}`);
     }
-    // Verify state from signed cookie (not session - works on serverless)
-    if (!code || !state || state !== req.signedCookies.oauth_state) {
-      console.error('[OAuth] State mismatch or missing code');
+    // Verify state from cookie
+    if (!code || !state || state !== stateFromCookie) {
+      console.error('[OAuth] State mismatch or missing code', { code, state, stateFromCookie });
       return res.redirect('/?error=auth_failed');
     }
     res.clearCookie('oauth_state');
