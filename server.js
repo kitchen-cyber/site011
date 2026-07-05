@@ -210,17 +210,20 @@ app.get('/auth/google/callback', async (req, res) => {
         grant_type: 'authorization_code'
       })
     });
-    if (!tokenRes.ok) throw new Error('Token exchange failed');
+    if (!tokenRes.ok) throw new Error(`Token exchange failed: ${tokenRes.status} ${tokenRes.statusText}`);
     const tokens = await tokenRes.json();
+    console.log('[OAuth] Token exchange success');
 
     const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${tokens.access_token}` }
     });
-    if (!userRes.ok) throw new Error('Userinfo failed');
+    if (!userRes.ok) throw new Error(`Userinfo failed: ${userRes.status} ${userRes.statusText}`);
     const profile = await userRes.json();
+    console.log('[OAuth] User profile retrieved:', { email: profile.email, name: profile.name });
 
     const email = String(profile.email || '').toLowerCase();
     if (!profile.email_verified) {
+      console.warn('[OAuth] Email not verified:', email);
       return res.redirect('/?error=email_not_verified');
     }
 
@@ -230,9 +233,10 @@ app.get('/auth/google/callback', async (req, res) => {
       picture: profile.picture || '',
       isAdmin: ADMIN_EMAILS.includes(email)
     };
+    console.log('[OAuth] Session user set:', { email, isAdmin: ADMIN_EMAILS.includes(email) });
     res.redirect('/');
   } catch (err) {
-    console.error('OAuth error:', err.message);
+    console.error('[OAuth ERROR]', err.message, err.stack);
     res.redirect('/?error=oauth_failed');
   }
 });
