@@ -169,10 +169,13 @@ function getContent() {
 // Fetch latest content from GitHub on startup (for cross-instance persistence on Vercel)
 async function fetchContentFromGithub() {
   try {
-    var url = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/data/content.json';
-    var res = await fetch(url, { headers: { 'User-Agent': 'raqt-fuel' } });
+    var url = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/data/content.json?ref=' + GITHUB_BRANCH;
+    var res = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'User-Agent': 'raqt-fuel', 'Accept': 'application/vnd.github.v3+json' }
+    });
     if (res.ok) {
-      var data = await res.json();
+      var json = await res.json();
+      var data = JSON.parse(Buffer.from(json.content, 'base64').toString('utf-8'));
       if (data && Object.keys(data).length > 0) {
         contentCache = data;
         console.log('[GitHub content] Loaded from repo');
