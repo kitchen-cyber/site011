@@ -1609,7 +1609,7 @@ enquiryForm.addEventListener('submit', async (e) => {
   </div>
 </div>
 <script>
-// Auth status — show Google sign-in / user info / admin link
+// Auth status — show login button / user info / admin link
 fetch('/api/auth/status').then(r => r.json()).then(data => {
   const el = document.getElementById('authItem');
   if (data.user) {
@@ -1624,6 +1624,13 @@ fetch('/api/auth/status').then(r => r.json()).then(data => {
     });
   } else if (data.oauthConfigured) {
     el.innerHTML = '<a href="/auth/google" class="nav-google">Sign in with Google</a>';
+  } else if (data.devMode) {
+    el.innerHTML = '<a href="#" class="nav-google" id="devLoginBtn">Dev Login</a>';
+    document.getElementById('devLoginBtn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/auth/dev-login', { method: 'POST' });
+      location.reload();
+    });
   }
 });
 
