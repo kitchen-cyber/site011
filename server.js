@@ -166,6 +166,7 @@ app.get('/auth/google', (req, res) => {
   const state = crypto.randomBytes(16).toString('hex');
   // Store state in signed cookie (works on serverless Vercel)
   res.cookie('oauth_state', state, { signed: true, httpOnly: true, sameSite: 'lax', secure: IS_PROD, maxAge: 5 * 60 * 1000 });
+  console.log('[OAuth Start] State cookie set:', state);
   const baseUrl = getBaseUrl(req);
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
@@ -181,11 +182,18 @@ app.get('/auth/google', (req, res) => {
 app.get('/auth/google/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
+    console.log('[OAuth Callback]', {
+      state_from_query: state,
+      state_from_cookie: req.signedCookies.oauth_state,
+      all_cookies: Object.keys(req.cookies),
+      all_signed_cookies: Object.keys(req.signedCookies)
+    });
     if (req.query.error) {
       return res.redirect(`/admin?setup=1&uri=${encodeURIComponent(getBaseUrl(req) + '/auth/google/callback')}&error=${req.query.error}`);
     }
     // Verify state from signed cookie (not session - works on serverless)
     if (!code || !state || state !== req.signedCookies.oauth_state) {
+      console.error('[OAuth] State mismatch or missing code');
       return res.redirect('/?error=auth_failed');
     }
     res.clearCookie('oauth_state');
