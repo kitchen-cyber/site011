@@ -630,7 +630,8 @@ function renderStringField(container, pathArr, key, value) {
       const fd = new FormData();
       fd.append('image', file.files[0]);
       try {
-        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+        var oldUrl = encodeURIComponent(input.value);
+        const res = await fetch('/api/admin/upload?oldUrl=' + oldUrl, { method: 'POST', body: fd });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Upload failed');
         input.value = json.url;

@@ -558,6 +558,29 @@ const upload = multer({
   }
 });
 
+// ── Helper: delete a file from GitHub repo ──
+async function deleteFromGithub(filepath) {
+  if (!GITHUB_TOKEN || !filepath) return null;
+  try {
+    var apiUrl = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + filepath;
+    var getRes = await fetch(apiUrl + '?ref=' + GITHUB_BRANCH, {
+      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'User-Agent': 'raqt-fuel' }
+    });
+    if (!getRes.ok) return null;
+    var existing = await getRes.json();
+    var delRes = await fetch(apiUrl, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + GITHUB_TOKEN,
+        'Content-Type': 'application/json',
+        'User-Agent': 'raqt-fuel'
+      },
+      body: JSON.stringify({ message: 'Delete ' + filepath.split('/').pop(), sha: existing.sha, branch: GITHUB_BRANCH })
+    });
+    return delRes.ok;
+  } catch (e) { return null; }
+}
+
 app.post('/api/admin/upload', requireAdmin, async (req, res) => {
   upload.single('image')(req, res, async function(err) {
     if (err) return res.status(400).json({ error: err.message });
@@ -565,6 +588,12 @@ app.post('/api/admin/upload', requireAdmin, async (req, res) => {
 
     var ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
     var filename = Date.now() + '-' + crypto.randomBytes(4).toString('hex') + ext;
+
+    // Delete old file from GitHub if it was a previous upload
+    var oldUrl = req.query.oldUrl || '';
+    if (oldUrl.startsWith('/uploads/')) {
+      await deleteFromGithub('public/uploads/' + oldUrl.replace('/uploads/', ''));
+    }
 
     // Save locally (immediate access)
     try {
@@ -575,7 +604,7 @@ app.post('/api/admin/upload', requireAdmin, async (req, res) => {
     }
 
     // Commit to GitHub for permanent persistence
-    var ghUrl = await commitToGithub('public/uploads/' + filename, req.file.buffer);
+    await commitToGithub('public/uploads/' + filename, req.file.buffer);
 
     // Serve URL: use local path; GitHub URL will work after deploy
     res.json({ ok: true, url: '/uploads/' + filename });
