@@ -1,0 +1,14 @@
+{
+  "total": 0,
+  "byStatus": {
+    "new": 0,
+    "contacted": 0,
+    "quoted": 0,
+    "confirmed": 0,
+    "archived": 0
+  },
+  "byEventType": {},
+  "byMonth": {},
+  "newest": null,
+  "oldest": null
+}
