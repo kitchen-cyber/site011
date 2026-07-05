@@ -40,6 +40,9 @@ try {
   resend = null;
 }
 
+// Load embedded default content (works on Vercel's read-only filesystem)
+const EMBEDDED_DEFAULT_CONTENT = require('./lib/defaultContent.js');
+
 const DATA_DIR = IS_VERCEL ? '/tmp/data' : path.join(__dirname, 'data');
 const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
 const ENQUIRIES_FILE = path.join(DATA_DIR, 'enquiries.json');
@@ -48,20 +51,27 @@ const UPLOADS_DIR = IS_VERCEL ? '/tmp/uploads' : path.join(__dirname, 'public', 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
-// Seed content.json on Vercel (read-only filesystem, copy from repo to /tmp)
-if (IS_VERCEL && !supabase) {
-  try {
-    if (!fs.existsSync(CONTENT_FILE)) {
+// Initialize content files (on local, copy from data/; on Vercel, use embedded)
+try {
+  if (!fs.existsSync(CONTENT_FILE)) {
+    if (!IS_VERCEL) {
+      // Local: try to read from file
       const src = path.join(__dirname, 'data', 'content.json');
-      if (fs.existsSync(src)) fs.copyFileSync(src, CONTENT_FILE);
-      else fs.writeFileSync(CONTENT_FILE, '{}');
+      if (fs.existsSync(src)) {
+        fs.copyFileSync(src, CONTENT_FILE);
+      } else {
+        fs.writeFileSync(CONTENT_FILE, JSON.stringify(EMBEDDED_DEFAULT_CONTENT, null, 2));
+      }
+    } else {
+      // Vercel: use embedded content
+      fs.writeFileSync(CONTENT_FILE, JSON.stringify(EMBEDDED_DEFAULT_CONTENT, null, 2));
     }
-    if (!fs.existsSync(ENQUIRIES_FILE)) {
-      fs.writeFileSync(ENQUIRIES_FILE, '[]');
-    }
-  } catch (e) {
-    console.error('Seed error:', e.message);
   }
+  if (!fs.existsSync(ENQUIRIES_FILE)) {
+    fs.writeFileSync(ENQUIRIES_FILE, '[]');
+  }
+} catch (e) {
+  console.error('Initialize files error:', e.message);
 }
 
 // ── Google OAuth config ──
@@ -105,8 +115,11 @@ function escapeHtml(s) {
 function nl2br(s) {
   return escapeHtml(s).replace(/\r?\n/g, '<br>');
 }
-// Load default content from file at startup
-let defaultContent = readJson(CONTENT_FILE, {});
+// Load default content (embedded, falls back to file if exists)
+let defaultContent = readJson(CONTENT_FILE, EMBEDDED_DEFAULT_CONTENT);
+if (!defaultContent || Object.keys(defaultContent).length === 0) {
+  defaultContent = EMBEDDED_DEFAULT_CONTENT;
+}
 console.log(`[startup] defaultContent keys: ${Object.keys(defaultContent).length > 0 ? Object.keys(defaultContent).join(', ').substring(0, 100) : 'EMPTY'}`);
 
 async function getContent() {
