@@ -244,12 +244,30 @@ function requireAdmin(req, res, next) {
 
 // ── Public pages ──
 app.get('/', async (req, res) => {
-  const c = await getContent();
-  res.render('index', { c, nl2br });
+  try {
+    const c = await getContent();
+    if (!c || Object.keys(c).length === 0) {
+      console.error('[GET /] ERROR: getContent returned empty object');
+      return res.status(500).json({ error: 'Content not available', receivedContent: c });
+    }
+    res.render('index', { c, nl2br });
+  } catch (err) {
+    console.error('[GET /] ERROR:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 app.get('/team', async (req, res) => {
-  const c = await getContent();
-  res.render('team', { c, nl2br });
+  try {
+    const c = await getContent();
+    if (!c || Object.keys(c).length === 0) {
+      console.error('[GET /team] ERROR: getContent returned empty object');
+      return res.status(500).json({ error: 'Content not available' });
+    }
+    res.render('team', { c, nl2br });
+  } catch (err) {
+    console.error('[GET /team] ERROR:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 app.get('/index.html', (req, res) => res.redirect(301, '/'));
 app.get('/team.html', (req, res) => res.redirect(301, '/team'));
