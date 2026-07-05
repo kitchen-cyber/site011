@@ -797,7 +797,7 @@ document.getElementById('btnSave').addEventListener('click', async () => {
     status.textContent = '✓ Saved. Changes are live on the site.';
     status.classList.add('ok');
   } catch (e) {
-    status.textContent = 'Save error. Please try again.';
+    status.textContent = 'Save error: ' + e.message;
     status.classList.add('err');
   } finally {
     btn.disabled = false;

@@ -153,17 +153,19 @@ async function refreshContent() {
   }
 }
 
-// Save content — update cache immediately, then sync to Supabase in background
+// Save content — update cache immediately, then sync to Supabase
 async function saveContent(incoming) {
   contentCache = incoming;
+  let supabaseError = null;
   if (supabase) {
-    supabase
-      .from('content')
-      .upsert({ id: 1, data: incoming }, { onConflict: 'id' })
-      .then(({ error }) => {
-        if (error) console.error('[supabase save error]', error.message);
-      })
-      .catch(err => console.error('[supabase save crash]', err.message));
+    try {
+      const { error } = await supabase
+        .from('content')
+        .upsert({ id: 1, data: incoming }, { onConflict: 'id' });
+      if (error) supabaseError = error.message;
+    } catch (err) {
+      supabaseError = err.message;
+    }
   }
   // Best-effort file backup (may fail on Vercel without affecting response)
   try {
@@ -175,6 +177,7 @@ async function saveContent(incoming) {
     while (backups.length > 20) fs.unlinkSync(path.join(backupDir, backups.shift()));
   } catch {}
   try { writeJson(CONTENT_FILE, incoming); } catch {}
+  if (supabaseError) throw new Error('Supabase save failed: ' + supabaseError);
 }
 
 // ── Consistent secret for sessions & signed cookies ──
@@ -521,7 +524,7 @@ app.put('/api/admin/content', requireAdmin, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[save error]', err.message);
-    res.status(500).json({ error: 'Failed to save content' });
+    res.status(500).json({ error: err.message });
   }
 });
 
