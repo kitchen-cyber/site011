@@ -256,6 +256,8 @@ body::before {
   transform: translateY(0);
 }
 #scrollTop:hover { background: #1f3a7a; transform: translateY(-2px); }
+#scrollTop.on-dark { background: var(--cream); color: var(--ink); box-shadow: 0 4px 16px rgba(11,24,66,0.15); }
+#scrollTop.on-dark:hover { background: #e8ddd0; }
 #scrollTop svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* в”Ђв”Ђ Hero в”Ђв”Ђ */
@@ -1904,14 +1906,32 @@ if (!localStorage.getItem('cookieBar')) {
 // Scroll to top
 document.addEventListener('DOMContentLoaded', function() {
   const scrollBtn = document.getElementById('scrollTop');
-  if (scrollBtn) {
-    window.addEventListener('scroll', () => {
-      scrollBtn.classList.toggle('visible', window.scrollY > 500);
-    }, { passive: true });
-    scrollBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (!scrollBtn) return;
+
+  // Dark sections where button should be cream
+  const darkSections = document.querySelectorAll('.services, .stats, .gallery-wrap, footer, .hero, .page-hero');
+  function checkDark() {
+    var onDark = false;
+    var btnBottom = 32, btnHeight = 48, margin = 16;
+    darkSections.forEach(function(s) {
+      var rect = s.getBoundingClientRect();
+      if (rect.top < window.innerHeight - btnBottom && rect.bottom > window.innerHeight - btnBottom - btnHeight - margin) {
+        onDark = true;
+      }
     });
+    scrollBtn.classList.toggle('on-dark', onDark);
   }
+
+  window.addEventListener('scroll', function() {
+    scrollBtn.classList.toggle('visible', window.scrollY > 500);
+    checkDark();
+  }, { passive: true });
+  window.addEventListener('resize', checkDark, { passive: true });
+  checkDark();
+
+  scrollBtn.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 });
 </script>
 
