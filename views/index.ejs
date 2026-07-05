@@ -125,6 +125,36 @@ nav {
   transition: color 0.3s;
   position: relative;
 }
+.nav-google {
+  font-size: 11px !important;
+  border: 1px solid var(--gold);
+  padding: 6px 14px !important;
+  border-radius: var(--radius-sm);
+}
+.nav-google::after { display: none !important; }
+.nav-user {
+  font-size: 11px !important;
+  opacity: 0.5;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-user img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.nav-logout {
+  font-size: 11px !important;
+  opacity: 0.5;
+  cursor: pointer;
+}
+.nav-logout:hover { opacity: 1 !important; color: var(--ink) !important; }
+.nav-admin {
+  color: var(--gold) !important;
+  font-weight: 600 !important;
+}
 .nav-links a::after {
   content: '';
   position: absolute;
@@ -1198,6 +1228,7 @@ if (sessionStorage.getItem('visited')) {
   <li><a href="/team"><%= c.nav.linkTeam %></a></li>
   <li><a href="#menu"><%= c.nav.linkMenu %></a></li>
   <li><a href="#contact" class="nav-cta"><%= c.nav.linkCta %></a></li>
+  <li id="authItem"></li>
 </ul>
 
 <section class="hero">
@@ -1578,6 +1609,24 @@ enquiryForm.addEventListener('submit', async (e) => {
   </div>
 </div>
 <script>
+// Auth status — show Google sign-in / user info / admin link
+fetch('/api/auth/status').then(r => r.json()).then(data => {
+  const el = document.getElementById('authItem');
+  if (data.user) {
+    if (data.user.isAdmin) {
+      el.innerHTML = '<a href="/admin" class="nav-admin">Admin Panel</a> <a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
+    } else {
+      el.innerHTML = '<span class="nav-user">' + (data.user.picture ? '<img src="' + data.user.picture + '" alt="">' : '') + data.user.name + '</span> <a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
+    }
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      fetch('/auth/logout', { method: 'POST' }).then(() => location.reload());
+    });
+  } else if (data.oauthConfigured) {
+    el.innerHTML = '<a href="/auth/google" class="nav-google">Sign in with Google</a>';
+  }
+});
+
 // Cookie consent
 const cookieOverlay = document.getElementById('cookie-overlay');
 const cookieAccept = document.getElementById('cookieAccept');

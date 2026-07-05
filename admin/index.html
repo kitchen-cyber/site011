@@ -396,6 +396,8 @@ body {
       Dev Login (local mode)
     </button>
     <p class="dev-note" id="devNote" style="display:none">Google OAuth not configured — local dev login available.<br>Add credentials to .env file for production.</p>
+    <p class="dev-note" id="loginLogout" style="display:none; margin-top:16px"><a href="#" id="loginLogoutBtn" style="color:var(--ink); opacity:0.5">Logout and sign in with another account</a></p>
+    <p class="dev-note"><a href="/" style="color:var(--ink); opacity:0.4">&larr; Back to site</a></p>
   </div>
 </div>
 
@@ -479,7 +481,7 @@ let dirty = false;
 async function init() {
   const me = await fetch('/api/admin/me').then(r => r.json());
   const params = new URLSearchParams(location.search);
-  if (me.user) {
+  if (me.user && me.user.isAdmin) {
     document.getElementById('app').classList.add('show');
     document.getElementById('userName').textContent = me.user.name;
     if (me.user.picture) {
@@ -490,6 +492,16 @@ async function init() {
     await Promise.all([loadContent(), loadEnquiries()]);
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
+    if (me.user && !me.user.isAdmin) {
+      document.getElementById('loginError').textContent = 'You are signed in as ' + me.user.email + ' but this account does not have admin access.';
+      document.getElementById('loginError').classList.add('show');
+      document.getElementById('loginLogout').style.display = 'block';
+      document.getElementById('loginLogoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await fetch('/auth/logout', { method: 'POST' });
+        location.href = '/admin';
+      });
+    }
     if (me.devMode) {
       document.getElementById('btnDevLogin').style.display = 'inline-flex';
       document.getElementById('devNote').style.display = 'block';

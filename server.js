@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -8,13 +8,38 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
-const IS_PROD = process.env.NODE_ENV === 'production';
+const IS_VERCEL = !!process.env.VERCEL;
+const IS_PROD = process.env.NODE_ENV === 'production' || IS_VERCEL;
 
-const DATA_DIR = path.join(__dirname, 'data');
+function getBaseUrl(req) {
+  if (process.env.BASE_URL) return process.env.BASE_URL;
+  if (IS_VERCEL && req) return `https://${req.hostname}`;
+  return `http://localhost:${PORT}`;
+}
+
+const DATA_DIR = IS_VERCEL ? '/tmp/data' : path.join(__dirname, 'data');
 const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
 const ENQUIRIES_FILE = path.join(DATA_DIR, 'enquiries.json');
-const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
+const UPLOADS_DIR = IS_VERCEL ? '/tmp/uploads' : path.join(__dirname, 'public', 'uploads');
+
+fs.mkdirSync(DATA_DIR, { recursive: true });
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+// Seed content.json on Vercel (read-only filesystem, copy from repo to /tmp)
+if (IS_VERCEL) {
+  try {
+    if (!fs.existsSync(CONTENT_FILE)) {
+      const src = path.join(__dirname, 'data', 'content.json');
+      if (fs.existsSync(src)) fs.copyFileSync(src, CONTENT_FILE);
+      else fs.writeFileSync(CONTENT_FILE, '{}');
+    }
+    if (!fs.existsSync(ENQUIRIES_FILE)) {
+      fs.writeFileSync(ENQUIRIES_FILE, '[]');
+    }
+  } catch (e) {
+    console.error('Seed error:', e.message);
+  }
+}
 
 // ── Google OAuth config ──
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -68,17 +93,13 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
-app.use(session({
+app.use(cookieSession({
   name: 'raqt.sid',
   secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: IS_PROD,
-    maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
-  }
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: IS_PROD,
+  maxAge: 1000 * 60 * 60 * 24 * 7
 }));
 
 function requireAdmin(req, res, next) {
@@ -93,14 +114,12 @@ app.get('/', (req, res) => {
 app.get('/team', (req, res) => {
   res.render('team', { c: getContent(), nl2br });
 });
-// Legacy .html paths
 app.get('/index.html', (req, res) => res.redirect(301, '/'));
 app.get('/team.html', (req, res) => res.redirect(301, '/team'));
 
 // ── Public API: enquiry form ──
 app.post('/api/enquiry', (req, res) => {
   const { firstName, lastName, email, phone, eventType, guestCount, message, website } = req.body || {};
-  // Honeypot: real users never fill the hidden "website" field
   if (website) return res.json({ ok: true });
   if (!firstName || !lastName || !email || !eventType || !message) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -130,9 +149,10 @@ app.get('/auth/google', (req, res) => {
   if (!OAUTH_CONFIGURED) return res.redirect('/admin?error=oauth_not_configured');
   const state = crypto.randomBytes(16).toString('hex');
   req.session.oauthState = state;
+  const baseUrl = getBaseUrl(req);
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: `${BASE_URL}/auth/google/callback`,
+    redirect_uri: `${baseUrl}/auth/google/callback`,
     response_type: 'code',
     scope: 'openid email profile',
     state,
@@ -145,9 +165,10 @@ app.get('/auth/google/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
     if (!code || !state || state !== req.session.oauthState) {
-      return res.redirect('/admin?error=invalid_state');
+      return res.redirect('/?error=auth_failed');
     }
     delete req.session.oauthState;
+    const baseUrl = getBaseUrl(req);
 
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -156,7 +177,7 @@ app.get('/auth/google/callback', async (req, res) => {
         code: String(code),
         client_id: GOOGLE_CLIENT_ID,
         client_secret: GOOGLE_CLIENT_SECRET,
-        redirect_uri: `${BASE_URL}/auth/google/callback`,
+        redirect_uri: `${baseUrl}/auth/google/callback`,
         grant_type: 'authorization_code'
       })
     });
@@ -170,24 +191,24 @@ app.get('/auth/google/callback', async (req, res) => {
     const profile = await userRes.json();
 
     const email = String(profile.email || '').toLowerCase();
-    if (!profile.email_verified || !ADMIN_EMAILS.includes(email)) {
-      return res.redirect('/admin?error=not_allowed');
+    if (!profile.email_verified) {
+      return res.redirect('/?error=email_not_verified');
     }
 
     req.session.user = {
       email,
       name: profile.name || email,
       picture: profile.picture || '',
-      isAdmin: true
+      isAdmin: ADMIN_EMAILS.includes(email)
     };
-    res.redirect('/admin');
+    res.redirect('/');
   } catch (err) {
     console.error('OAuth error:', err.message);
-    res.redirect('/admin?error=oauth_failed');
+    res.redirect('/?error=auth_failed');
   }
 });
 
-// Dev login (only when Google is not configured and not production)
+// Dev login
 app.post('/auth/dev-login', (req, res) => {
   if (OAUTH_CONFIGURED || IS_PROD) return res.status(403).json({ error: 'Disabled' });
   req.session.user = { email: 'dev@localhost', name: 'Dev Admin', picture: '', isAdmin: true };
@@ -195,7 +216,17 @@ app.post('/auth/dev-login', (req, res) => {
 });
 
 app.post('/auth/logout', (req, res) => {
-  req.session.destroy(() => res.json({ ok: true }));
+  req.session = null;
+  res.json({ ok: true });
+});
+
+// ── Public auth status ──
+app.get('/api/auth/status', (req, res) => {
+  res.json({
+    user: req.session.user || null,
+    oauthConfigured: OAUTH_CONFIGURED,
+    devMode: !OAUTH_CONFIGURED && !IS_PROD
+  });
 });
 
 // ── Admin panel ──
@@ -207,7 +238,7 @@ app.get('/api/admin/me', (req, res) => {
   if (req.session.user && req.session.user.isAdmin) {
     return res.json({ user: req.session.user, oauthConfigured: OAUTH_CONFIGURED, devMode: !OAUTH_CONFIGURED && !IS_PROD });
   }
-  res.json({ user: null, oauthConfigured: OAUTH_CONFIGURED, devMode: !OAUTH_CONFIGURED && !IS_PROD });
+  res.json({ user: req.session.user || null, oauthConfigured: OAUTH_CONFIGURED, devMode: !OAUTH_CONFIGURED && !IS_PROD });
 });
 
 // Content
@@ -219,12 +250,10 @@ app.put('/api/admin/content', requireAdmin, (req, res) => {
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
     return res.status(400).json({ error: 'Invalid content' });
   }
-  // Backup previous version
   const backupDir = path.join(DATA_DIR, 'backups');
   fs.mkdirSync(backupDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, `content-${stamp}.json`)); } catch {}
-  // Keep only last 20 backups
   const backups = fs.readdirSync(backupDir).filter(f => f.startsWith('content-')).sort();
   while (backups.length > 20) fs.unlinkSync(path.join(backupDir, backups.shift()));
 
@@ -233,7 +262,6 @@ app.put('/api/admin/content', requireAdmin, (req, res) => {
 });
 
 // Image upload
-fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 const upload = multer({
   storage: multer.diskStorage({
     destination: UPLOADS_DIR,
@@ -255,6 +283,11 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
     res.json({ ok: true, url: `/uploads/${req.file.filename}` });
   });
 });
+
+// Serve uploaded images on Vercel
+if (IS_VERCEL) {
+  app.use('/uploads', express.static(UPLOADS_DIR));
+}
 
 // Enquiries
 app.get('/api/admin/enquiries', requireAdmin, (req, res) => {
@@ -283,7 +316,13 @@ app.use((req, res) => {
   res.status(404).send('<meta http-equiv="refresh" content="2;url=/"><body style="font-family:sans-serif;text-align:center;padding-top:20vh;background:#F0E7DE;color:#0B1842"><h1>404</h1><p>Page not found. Redirecting…</p></body>');
 });
 
-app.listen(PORT, () => {
-  console.log(`raqt fuel running at ${BASE_URL}`);
-  console.log(`Admin panel:        ${BASE_URL}/admin`);
-});
+// Vercel export
+module.exports = app;
+
+// Local dev
+if (!IS_VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`raqt fuel running at http://localhost:${PORT}`);
+    console.log(`Admin panel:        http://localhost:${PORT}/admin`);
+  });
+}

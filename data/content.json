@@ -68,10 +68,26 @@
   },
   "stats": {
     "items": [
-      { "value": "14", "suffix": "+", "label": "Years Excellence" },
-      { "value": "600", "suffix": "+", "label": "Events Crafted" },
-      { "value": "5", "suffix": "★", "label": "Average Rating" },
-      { "value": "98", "suffix": "%", "label": "Would Recommend" }
+      {
+        "value": "14",
+        "suffix": "+",
+        "label": "Years Excellence"
+      },
+      {
+        "value": "600",
+        "suffix": "+",
+        "label": "Events Crafted"
+      },
+      {
+        "value": "5",
+        "suffix": "★",
+        "label": "Average Rating"
+      },
+      {
+        "value": "98",
+        "suffix": "%",
+        "label": "Would Recommend"
+      }
     ]
   },
   "testimonials": {
@@ -108,14 +124,46 @@
     "label": "Gallery",
     "title": "Moments We've Crafted",
     "items": [
-      { "image": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=90", "caption": "Private Dining", "alt": "Fine dining table setting" },
-      { "image": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=90", "caption": "In Action", "alt": "Chef preparing food" },
-      { "image": "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1600&q=90", "caption": "Events", "alt": "Elegant event setup" },
-      { "image": "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=1600&q=90", "caption": "", "alt": "Artfully plated dish" },
-      { "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&q=90", "caption": "", "alt": "Gourmet dish on dark table" },
-      { "image": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=90", "caption": "Ambiance", "alt": "Restaurant ambiance" },
-      { "image": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1600&q=90", "caption": "", "alt": "Fresh salad ingredients" },
-      { "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=90", "caption": "", "alt": "Wood fired pizza" }
+      {
+        "image": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&q=90",
+        "caption": "Private Dining",
+        "alt": "Fine dining table setting"
+      },
+      {
+        "image": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1600&q=90",
+        "caption": "In Action",
+        "alt": "Chef preparing food"
+      },
+      {
+        "image": "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1600&q=90",
+        "caption": "Events",
+        "alt": "Elegant event setup"
+      },
+      {
+        "image": "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=1600&q=90",
+        "caption": "",
+        "alt": "Artfully plated dish"
+      },
+      {
+        "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&q=90",
+        "caption": "",
+        "alt": "Gourmet dish on dark table"
+      },
+      {
+        "image": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=90",
+        "caption": "Ambiance",
+        "alt": "Restaurant ambiance"
+      },
+      {
+        "image": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1600&q=90",
+        "caption": "",
+        "alt": "Fresh salad ingredients"
+      },
+      {
+        "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=90",
+        "caption": "",
+        "alt": "Wood fired pizza"
+      }
     ]
   },
   "contact": {
