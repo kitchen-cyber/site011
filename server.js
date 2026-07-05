@@ -22,9 +22,10 @@ function getBaseUrl(req) {
 
 // ── Supabase config ──
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
-const SUPABASE_SERVICE_KEY = (process.env.SUPABASE_SERVICE_KEY || '').replace(/[^\x20-\x7E]/g, '').trim();
-const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY 
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || '').trim();
+const SUPABASE_SERVICE_KEY = (process.env.SUPABASE_SERVICE_KEY || '').trim();
+const supabase = SUPABASE_URL && (SUPABASE_ANON_KEY || SUPABASE_SERVICE_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY || SUPABASE_SERVICE_KEY)
   : null;
 
 // ── GitHub config (for photo persistence) ──
@@ -213,7 +214,7 @@ function getContent() {
 
 // Refresh content from Supabase in background (non-blocking)
 async function refreshContent() {
-  if (!supabase || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
   try {
     var rows = await supabaseRequest('GET', '/rest/v1/content?id=eq.1&select=data');
     if (rows && rows.length > 0 && rows[0].data && Object.keys(rows[0].data).length > 0) {
@@ -232,7 +233,7 @@ async function refreshContent() {
 async function saveContent(incoming) {
   contentCache = incoming;
   var supabaseError = null;
-  if (supabase && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+  if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
     try {
       var bodyBytes = Buffer.from(JSON.stringify({ id: 1, data: incoming }), 'utf-8');
       await supabaseRequest('POST', '/rest/v1/content', bodyBytes);
