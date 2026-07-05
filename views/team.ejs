@@ -104,31 +104,47 @@ body::before {
   border: 1px solid var(--gold);
   padding: 6px 14px !important;
   border-radius: var(--radius-sm);
+  background: transparent;
 }
 .nav-google::after { display: none !important; }
-.nav-user {
-  font-size: 11px !important;
-  opacity: 0.5;
-  pointer-events: none;
+.nav-auth {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
+}
+.nav-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px !important;
+  color: var(--ink);
 }
 .nav-user img {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
+  border: 1px solid var(--gold);
 }
 .nav-logout {
   font-size: 11px !important;
-  opacity: 0.5;
+  color: var(--ink);
+  opacity: 0.6;
   cursor: pointer;
+  padding: 4px 10px;
+  border: 1px solid rgba(11,24,66,0.2);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
 }
-.nav-logout:hover { opacity: 1 !important; color: var(--ink) !important; }
+.nav-logout::after { display: none !important; }
+.nav-logout:hover { opacity: 1; border-color: var(--gold); }
 .nav-admin {
   color: var(--gold) !important;
   font-weight: 600 !important;
+  padding: 6px 14px !important;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
 }
+.nav-admin::after { display: none !important; }
 .nav-links a::after {
   content: '';
   position: absolute;
@@ -703,17 +719,23 @@ fetch('/api/auth/status').then(r => r.json()).then(data => {
   
   if (data.user) {
     // User is logged in
+    let html = '<div class="nav-auth">';
     if (data.user.isAdmin) {
-      el.innerHTML = '<a href="/admin" class="nav-admin">Admin Panel</a> <a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
-    } else {
-      el.innerHTML = '<span class="nav-user">' + (data.user.picture ? '<img src="' + data.user.picture + '" alt="">' : '') + data.user.name + '</span> <a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
+      html += '<a href="/admin" class="nav-admin">Admin Panel</a>';
     }
+    html += '<span class="nav-user">';
+    if (data.user.picture) html += '<img src="' + data.user.picture + '" alt="">';
+    html += data.user.name + '</span>';
+    html += '<a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
+    html += '</div>';
+    el.innerHTML = html;
+    
     document.getElementById('logoutBtn').addEventListener('click', (e) => {
       e.preventDefault();
       fetch('/auth/logout', { method: 'POST' }).then(() => location.reload());
     });
   } else {
-    // Not logged in — always show Sign in button
+    // Not logged in — show Sign in button
     el.innerHTML = '<a href="/auth/google" class="nav-google">Sign in with Google</a>';
   }
 });
