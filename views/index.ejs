@@ -79,18 +79,12 @@ body::before {
   justify-content: space-between;
   height: 70px;
   padding: 0 36px;
-  transition: background 0.4s, box-shadow 0.4s;
-  background: rgba(240,231,222,0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(212,197,178,0.08);
+  transition: box-shadow 0.4s;
+  background: #F0E7DE;
+  border-bottom: 1px solid rgba(212,197,178,0.15);
 }
 .nav-wrap.scrolled {
-  background: rgba(240,231,222,0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
   box-shadow: 0 1px 20px rgba(11,24,66,0.06);
-  border-bottom-color: rgba(212,197,178,0.15);
 }
 .nav-logo {
   display: flex;
@@ -123,23 +117,27 @@ body::before {
   transition: background 0.25s, color 0.25s;
   position: relative;
 }
-.nav-links a:not(.nav-cta):not(.nav-auth-btn):hover {
+.nav-links a:not(.nav-pill):not(.nav-auth-btn):hover {
   background: rgba(11,24,66,0.04);
 }
-.nav-cta {
-  background: var(--gold) !important;
-  color: var(--ink) !important;
-  padding: 9px 22px !important;
-  font-weight: 600 !important;
+.nav-pill {
+  font-size: 11px !important;
+  border: 1px solid var(--ink) !important;
+  padding: 7px 16px !important;
   border-radius: 20px !important;
+  background: transparent !important;
+  color: var(--ink) !important;
+  font-weight: 600 !important;
   letter-spacing: 0.06em !important;
   transition: all 0.3s !important;
-  margin-left: 6px;
 }
-.nav-cta:hover {
-  opacity: 0.85 !important;
-  transform: translateY(-1px) !important;
-  background: var(--gold) !important;
+.nav-pill:hover {
+  background: var(--ink) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+.nav-cta {
+  margin-left: 6px;
 }
 .nav-auth-btn {
   display: inline-flex;
@@ -190,31 +188,11 @@ body::before {
   object-fit: cover;
 }
 .nav-logout {
-  font-size: 11px !important;
-  color: var(--ink) !important;
-  opacity: 0.55;
   cursor: pointer;
-  padding: 6px 14px;
-  border: 1px solid rgba(11,24,66,0.2);
-  border-radius: 20px;
   text-decoration: none;
-  font-weight: 500 !important;
-  letter-spacing: 0.06em !important;
-  transition: all 0.3s !important;
 }
-.nav-logout:hover { opacity: 1; border-color: var(--ink); background: rgba(11,24,66,0.04); }
-.nav-admin {
-  color: var(--ink) !important;
-  font-weight: 600 !important;
-  padding: 7px 16px !important;
-  border: 1px solid var(--ink);
-  border-radius: 20px !important;
-  font-size: 11px !important;
-  background: transparent !important;
-  letter-spacing: 0.06em !important;
-  transition: all 0.3s !important;
-}
-.nav-admin:hover { background: var(--ink) !important; color: #fff !important; }
+.nav-logout::after { display: none !important; }
+.nav-admin { }
 
 .nav-toggle {
   display: none;
@@ -251,6 +229,34 @@ body::before {
   transition: opacity 0.3s;
 }
 .nav-overlay.open { display: block; opacity: 1; }
+
+/* ── Scroll to top ── */
+#scrollTop {
+  position: fixed;
+  bottom: 32px; right: 32px;
+  z-index: 100;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 0.3s, visibility 0.3s, transform 0.3s, background 0.3s;
+  box-shadow: 0 4px 16px rgba(11,24,66,0.2);
+}
+#scrollTop.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+#scrollTop:hover { background: #1f3a7a; transform: translateY(-2px); }
+#scrollTop svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* в”Ђв”Ђ Hero в”Ђв”Ђ */
 .hero {
@@ -1074,14 +1080,13 @@ footer a:hover { color: var(--gold); }
     text-align: center;
   }
   .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
-  .nav-links .nav-cta {
+  .nav-links .nav-pill {
     margin-top: 16px;
-    background: var(--gold) !important;
-    color: var(--ink) !important;
     width: auto;
     min-width: 180px;
+    text-align: center;
   }
-  .nav-google, .nav-logout, .nav-admin { width: auto !important; min-width: 160px; text-align: center; }
+  .nav-google { width: auto !important; min-width: 160px; text-align: center; }
   .nav-auth { flex-direction: column; align-items: center; gap: 8px; }
   .nav-auth-btn { flex-direction: column; align-items: center; gap: 8px; width: 100%; }
   .nav-toggle { display: flex; z-index: 302; }
@@ -1439,7 +1444,7 @@ if (sessionStorage.getItem('visited')) {
     <a href="#services"><%= c.nav.linkServices %></a>
     <a href="/team"><%= c.nav.linkTeam %></a>
     <a href="#menu"><%= c.nav.linkMenu %></a>
-    <a href="#contact" class="nav-cta"><%= c.nav.linkCta %></a>
+    <a href="#contact" class="nav-pill nav-cta"><%= c.nav.linkCta %></a>
     <span id="authItem" class="nav-auth-btn"></span>
   </div>
   <div class="nav-overlay" id="navOverlay"></div>
@@ -1837,12 +1842,12 @@ fetch('/api/auth/status').then(r => r.json()).then(data => {
     // User is logged in
     let html = '<div class="nav-auth">';
     if (data.user.isAdmin) {
-      html += '<a href="/admin" class="nav-admin">Admin Panel</a>';
+      html += '<a href="/admin" class="nav-pill nav-admin">Admin Panel</a>';
     }
     html += '<span class="nav-user">';
     if (data.user.picture) html += '<img src="' + data.user.picture + '" alt="">';
     html += data.user.name + '</span>';
-    html += '<a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
+    html += '<a href="#" class="nav-pill nav-logout" id="logoutBtn">Logout</a>';
     html += '</div>';
     el.innerHTML = html;
     
@@ -1890,7 +1895,22 @@ cookieOverlay.addEventListener('click', (e) => { if (e.target === cookieOverlay)
 if (!localStorage.getItem('cookieBar')) {
   setTimeout(() => cookieOverlay.classList.add('show'), 1000);
 }
+
+// Scroll to top
+const scrollBtn = document.getElementById('scrollTop');
+if (scrollBtn) {
+  window.addEventListener('scroll', () => {
+    scrollBtn.classList.toggle('visible', window.scrollY > 500);
+  }, { passive: true });
+  scrollBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
 </script>
+
+<button id="scrollTop" aria-label="Scroll to top">
+  <svg viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+</button>
 
 </body>
 </html>
