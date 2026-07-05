@@ -91,7 +91,7 @@ function getContent() {
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET && IS_PROD) {
   console.warn('[CRITICAL] SESSION_SECRET not set in environment! Set it to fix login on Vercel.');
-  console.warn('[CRITICAL] Run: node -e "console.log(require(\\'crypto\\').randomBytes(32).toString(\\'hex\\'))"');
+  console.warn('[CRITICAL] Run: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
 }
 
 // ── App setup ──
