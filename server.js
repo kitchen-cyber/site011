@@ -112,15 +112,44 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
-app.use(cookieSession({
-  name: 'raqt.sid',
-  keys: [SESSION_SECRET],
-  httpOnly: true,
-  sameSite: 'lax',
-  secure: IS_PROD,
-  maxAge: 1000 * 60 * 60 * 24 * 7,
-  signed: false  // Unsigned cookies work reliably on serverless (session data is base64 JSON)
-}));
+// Manual session management using base64-encoded cookies (more reliable than cookie-session on serverless)
+app.use((req, res, next) => {
+  const cookies = parseCookies(req);
+  const sessionCookie = cookies.raqt_sid;
+  
+  // Parse existing session
+  req.session = {};
+  if (sessionCookie) {
+    try {
+      const decoded = Buffer.from(sessionCookie, 'base64').toString('utf-8');
+      req.session = JSON.parse(decoded);
+    } catch (err) {
+      console.error('[Session parse error]', err.message);
+    }
+  }
+  
+  // Intercept res.end() to save session cookie
+  const originalEnd = res.end.bind(res);
+  res.end = function(...args) {
+    if (Object.keys(req.session).length > 0) {
+      const sessionJSON = JSON.stringify(req.session);
+      const sessionB64 = Buffer.from(sessionJSON).toString('base64');
+      res.cookie('raqt_sid', sessionB64, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: IS_PROD,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        path: '/'
+      });
+    } else if (sessionCookie) {
+      // Clear session if empty
+      res.clearCookie('raqt_sid', { path: '/' });
+    }
+    originalEnd(...args);
+  };
+  
+  next();
+});
 
 // Middleware: verify admin status from email, not trusting session data
 function verifyAdminStatus(req, res, next) {
