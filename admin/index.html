@@ -637,7 +637,17 @@ function renderStringField(container, pathArr, key, value) {
         preview.src = json.url;
         preview.style.opacity = '1';
         setByPath(content, pathArr, json.url);
-        markDirty();
+        // Auto-save content after photo upload
+        const saveRes = await fetch('/api/admin/content', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(content)
+        });
+        if (!saveRes.ok) { const e = await saveRes.json().catch(() => {}); throw new Error(e?.error || 'Auto-save failed'); }
+        dirty = false;
+        document.getElementById('savebar').classList.remove('dirty');
+        document.getElementById('saveStatus').textContent = '✓ Photo saved and published';
+        document.getElementById('saveStatus').className = 'save-status ok';
       } catch (e) {
         alert('Upload error: ' + e.message);
       } finally {
