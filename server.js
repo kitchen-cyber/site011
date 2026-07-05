@@ -120,10 +120,9 @@ let defaultContent = readJson(CONTENT_FILE, EMBEDDED_DEFAULT_CONTENT);
 if (!defaultContent || Object.keys(defaultContent).length === 0) {
   defaultContent = EMBEDDED_DEFAULT_CONTENT;
 }
-console.log(`[startup] defaultContent keys: ${Object.keys(defaultContent).length > 0 ? Object.keys(defaultContent).join(', ').substring(0, 100) : 'EMPTY'}`);
+
 
 async function getContent() {
-  // Always return at least the default content
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -131,63 +130,36 @@ async function getContent() {
         .select('data')
         .eq('id', 1)
         .single();
-      
-      console.log('[getContent] Supabase response:', { 
-        error: error ? error.message : null, 
-        dataKeys: data ? Object.keys(data).join(',') : 'null',
-        dataDataKeys: data?.data ? Object.keys(data.data).join(',').substring(0, 100) : 'null'
-      });
-      
       if (error) {
-        console.warn('[getContent] Supabase error, using fallback');
         return defaultContent;
       }
       if (!data?.data || Object.keys(data.data).length === 0) {
-        console.warn('[getContent] Empty data from Supabase, using fallback');
         return defaultContent;
       }
-      console.log('[getContent] Returning data from Supabase');
       return data.data;
     } catch (err) {
-      console.error('[getContent error]', err.message);
       return defaultContent;
     }
   }
-  console.log('[getContent] No Supabase, returning defaultContent with keys:', Object.keys(defaultContent).length);
   return defaultContent;
 }
 
-// Initialize content on startup by seeding Supabase if empty
 async function initializeContent() {
-  console.log('[initializeContent] Starting... supabase=' + (supabase ? 'configured' : 'not configured') + ', defaultContent.keys=' + Object.keys(defaultContent).length);
-  if (!supabase || Object.keys(defaultContent).length === 0) {
-    console.log('[initializeContent] Skipped: supabase=' + (supabase ? 'ok' : 'MISSING') + ', defaultContent=' + (Object.keys(defaultContent).length > 0 ? 'OK' : 'EMPTY'));
-    return;
-  }
+  if (!supabase || Object.keys(defaultContent).length === 0) return;
   try {
     const { data, error } = await supabase
       .from('content')
       .select('data')
       .eq('id', 1)
       .single();
-    
-    console.log('[initializeContent] Checked Supabase:', { 
-      error: error ? error.message : null, 
-      dataKeys: data ? Object.keys(data).join(',') : 'null'
-    });
-    
-    // If table is empty or error, seed with defaultContent
     if (error || !data?.data || Object.keys(data.data).length === 0) {
-      console.log('[initializeContent] Seeding Supabase with default content (' + Object.keys(defaultContent).length + ' keys)');
       const result = await supabase
         .from('content')
         .upsert({ id: 1, data: defaultContent }, { onConflict: 'id' });
-      console.log('[initializeContent] Upsert result:', { error: result.error ? result.error.message : 'success' });
-    } else {
-      console.log('[initializeContent] Supabase already has content, skipping seed');
+      if (result.error) console.error('[seed]', result.error.message);
     }
   } catch (err) {
-    console.error('[initializeContent error]', err.message);
+    console.error('[seed]', err.message);
   }
 }
 
@@ -516,9 +488,7 @@ app.put('/api/admin/content', requireAdmin, async (req, res) => {
         .from('content')
         .upsert({ 
           id: 1,
-          data: incoming,
-          updated_at: new Date().toISOString(),
-          updated_by: req.session.user?.email || 'unknown'
+          data: incoming
         }, { onConflict: 'id' });
       if (error) throw error;
       console.log('[Content saved to Supabase]', { by: req.session.user?.email });
