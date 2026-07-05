@@ -697,10 +697,12 @@ window.addEventListener('scroll', () => {
   }
 });
 
-// Auth status — show Google sign-in / user info / admin link
+// Auth status — show login button / user info / admin link
 fetch('/api/auth/status').then(r => r.json()).then(data => {
   const el = document.getElementById('authItem');
+  
   if (data.user) {
+    // User is logged in
     if (data.user.isAdmin) {
       el.innerHTML = '<a href="/admin" class="nav-admin">Admin Panel</a> <a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
     } else {

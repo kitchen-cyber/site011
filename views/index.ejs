@@ -1381,10 +1381,10 @@ if (sessionStorage.getItem('visited')) {
     </div>
     <form class="contact-form reveal" id="enquiryForm">
       <div class="form-row">
-        <input type="text" name="firstName" placeholder="First Name" autocomplete="given-name" aria-label="First Name" required>
-        <input type="text" name="lastName" placeholder="Last Name" autocomplete="family-name" aria-label="Last Name" required>
+        <input type="text" name="firstName" id="firstName" placeholder="First Name" autocomplete="given-name" aria-label="First Name" required>
+        <input type="text" name="lastName" id="lastName" placeholder="Last Name" autocomplete="family-name" aria-label="Last Name" required>
       </div>
-      <input type="email" name="email" placeholder="Email Address" autocomplete="email" aria-label="Email Address" required>
+      <input type="email" name="email" id="email" placeholder="Email Address" autocomplete="email" aria-label="Email Address" required>
       <input type="tel" name="phone" placeholder="Phone Number" autocomplete="tel" aria-label="Phone Number">
       <select name="eventType" aria-label="Event Type" required>
         <option value="">Event Type</option>
@@ -1609,10 +1609,12 @@ enquiryForm.addEventListener('submit', async (e) => {
   </div>
 </div>
 <script>
-// Auth status — show login button / user info / admin link
+// Auth status — show login button / user info / admin link + auto-fill form
 fetch('/api/auth/status').then(r => r.json()).then(data => {
   const el = document.getElementById('authItem');
+  
   if (data.user) {
+    // User is logged in
     if (data.user.isAdmin) {
       el.innerHTML = '<a href="/admin" class="nav-admin">Admin Panel</a> <a href="#" class="nav-logout" id="logoutBtn">Logout</a>';
     } else {
@@ -1622,6 +1624,15 @@ fetch('/api/auth/status').then(r => r.json()).then(data => {
       e.preventDefault();
       fetch('/auth/logout', { method: 'POST' }).then(() => location.reload());
     });
+    
+    // Auto-fill contact form
+    const nameParts = data.user.name.split(' ');
+    const firstNameField = document.getElementById('firstName');
+    const lastNameField = document.getElementById('lastName');
+    const emailField = document.getElementById('email');
+    if (firstNameField && !firstNameField.value) firstNameField.value = nameParts[0] || '';
+    if (lastNameField && !lastNameField.value) lastNameField.value = nameParts.slice(1).join(' ') || '';
+    if (emailField && !emailField.value) emailField.value = data.user.email || '';
   } else if (data.oauthConfigured) {
     el.innerHTML = '<a href="/auth/google" class="nav-google">Sign in with Google</a>';
   } else if (data.devMode) {
