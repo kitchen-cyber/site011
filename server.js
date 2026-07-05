@@ -21,14 +21,14 @@ function getBaseUrl(req) {
 }
 
 // ── Supabase config ──
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
+const SUPABASE_SERVICE_KEY = (process.env.SUPABASE_SERVICE_KEY || '').replace(/[^\x20-\x7E]/g, '').trim();
 const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY 
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   : null;
 
 // ── GitHub config (for photo persistence) ──
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const GITHUB_TOKEN = (process.env.GITHUB_TOKEN || '').replace(/[^\x20-\x7E]/g, '').trim();
 const GITHUB_REPO = 'kitchen-cyber/site011';
 const GITHUB_BRANCH = 'main';
 
