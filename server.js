@@ -146,7 +146,13 @@ app.post('/api/enquiry', (req, res) => {
 
 // ── Google OAuth ──
 app.get('/auth/google', (req, res) => {
-  if (!OAUTH_CONFIGURED) return res.redirect('/admin?error=oauth_not_configured');
+  if (!OAUTH_CONFIGURED) {
+    if (!IS_PROD) {
+      req.session.user = { email: 'dev@localhost', name: 'Dev Admin', picture: '', isAdmin: true };
+      return res.redirect('/');
+    }
+    return res.redirect('/?error=oauth_not_configured');
+  }
   const state = crypto.randomBytes(16).toString('hex');
   req.session.oauthState = state;
   const baseUrl = getBaseUrl(req);
