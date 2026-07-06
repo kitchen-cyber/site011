@@ -409,10 +409,10 @@ app.post('/api/enquiry', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    // Save to file
-    const enquiries = readJson(ENQUIRIES_FILE, []);
+    // Save to KV + file
+    const enquiries = await readEnquiries();
     enquiries.unshift(enquiry);
-    writeJson(ENQUIRIES_FILE, enquiries);
+    await saveEnquiries(enquiries);
     console.log('[Enquiry saved]', { id: enquiry.id, email: enquiry.email });
 
     // Send email via Resend (optional, don't fail if it doesn't work)
@@ -699,6 +699,23 @@ if (IS_VERCEL) {
   });
 }
 
+// ── KV-backed enquiries helpers ──
+async function readEnquiries() {
+  if (kv) {
+    try {
+      var raw = await kv.get('enquiries');
+      if (raw) return typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch (e) { /* fallback to file */ }
+  }
+  return readJson(ENQUIRIES_FILE, []);
+}
+async function saveEnquiries(enquiries) {
+  try { writeJson(ENQUIRIES_FILE, enquiries); } catch (e) {}
+  if (kv) {
+    try { await kv.set('enquiries', JSON.stringify(enquiries)); } catch (e) {}
+  }
+}
+
 // Enquiries stats
 function computeEnquiryStats(enquiries) {
   var stats = {
@@ -729,7 +746,7 @@ function computeEnquiryStats(enquiries) {
 }
 
 app.get('/api/admin/enquiries/stats', requireAdmin, async (req, res) => {
-  var enquiries = readJson(ENQUIRIES_FILE, []);
+  var enquiries = await readEnquiries();
   var stats = computeEnquiryStats(enquiries);
   try {
     var buf = Buffer.from(JSON.stringify(stats, null, 2), 'utf-8');
@@ -739,24 +756,24 @@ app.get('/api/admin/enquiries/stats', requireAdmin, async (req, res) => {
 });
 
 // Enquiries
-app.get('/api/admin/enquiries', requireAdmin, (req, res) => {
-  res.json(readJson(ENQUIRIES_FILE, []));
+app.get('/api/admin/enquiries', requireAdmin, async (req, res) => {
+  res.json(await readEnquiries());
 });
-app.patch('/api/admin/enquiries/:id', requireAdmin, (req, res) => {
-  const enquiries = readJson(ENQUIRIES_FILE, []);
+app.patch('/api/admin/enquiries/:id', requireAdmin, async (req, res) => {
+  const enquiries = await readEnquiries();
   const item = enquiries.find(e => e.id === req.params.id);
   if (!item) return res.status(404).json({ error: 'Not found' });
   const allowed = ['new', 'contacted', 'quoted', 'confirmed', 'archived'];
   if (req.body.status && allowed.includes(req.body.status)) item.status = req.body.status;
-  writeJson(ENQUIRIES_FILE, enquiries);
+  await saveEnquiries(enquiries);
   res.json({ ok: true, item });
 });
-app.delete('/api/admin/enquiries/:id', requireAdmin, (req, res) => {
-  let enquiries = readJson(ENQUIRIES_FILE, []);
+app.delete('/api/admin/enquiries/:id', requireAdmin, async (req, res) => {
+  let enquiries = await readEnquiries();
   const before = enquiries.length;
   enquiries = enquiries.filter(e => e.id !== req.params.id);
   if (enquiries.length === before) return res.status(404).json({ error: 'Not found' });
-  writeJson(ENQUIRIES_FILE, enquiries);
+  await saveEnquiries(enquiries);
   res.json({ ok: true });
 });
 
