@@ -594,6 +594,49 @@ app.put('/api/admin/content', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Factory reset: save / restore factory defaults ──
+app.post('/api/admin/factory/save', requireAdmin, async (req, res) => {
+  try {
+    var snapshot = JSON.parse(JSON.stringify(contentCache));
+    if (kv) await kv.set('factory_content', JSON.stringify(snapshot));
+    try {
+      var buf = Buffer.from(JSON.stringify(snapshot, null, 2), 'utf-8');
+      await commitToGithub('data/factory-content.json', buf);
+    } catch (e) { /* best-effort */ }
+    try { writeJson(path.join(DATA_DIR, 'factory-content.json'), snapshot); } catch (e) {}
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/factory/restore', requireAdmin, async (req, res) => {
+  try {
+    var snapshot = null;
+    if (kv) {
+      try {
+        var raw = await kv.get('factory_content');
+        if (raw) snapshot = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      } catch (e) {}
+    }
+    if (!snapshot) {
+      try { snapshot = readJson(path.join(DATA_DIR, 'factory-content.json'), null); } catch (e) {}
+    }
+    if (!snapshot) {
+      var url = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/data/factory-content.json?ref=' + GITHUB_BRANCH;
+      var res2 = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'User-Agent': 'raqt-fuel', 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (res2.ok) { var json = await res2.json(); snapshot = JSON.parse(Buffer.from(json.content, 'base64').toString('utf-8')); }
+    }
+    if (!snapshot) return res.status(404).json({ error: 'No factory snapshot saved yet' });
+    await saveContent(snapshot);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Image upload — saves locally and commits to GitHub for permanent persistence
 const upload = multer({
   storage: multer.memoryStorage(),
