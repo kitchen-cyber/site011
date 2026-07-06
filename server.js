@@ -6,6 +6,7 @@ const fs = require('fs');
 const https = require('https');
 const crypto = require('crypto');
 const { Resend } = require('resend');
+const { Redis } = require('@upstash/redis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,6 +62,21 @@ async function commitToGithub(filepath, buffer) {
     return null;
   }
   return filepath;
+}
+
+// ── KV (Upstash Redis / Vercel KV) for cross-instance persistence ──
+var kv = null;
+try {
+  if (process.env.KV_REST_API_URL) {
+    kv = new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN
+    });
+    console.log('[KV] Initialized');
+  }
+} catch (e) {
+  console.log('[KV] Not available:', e.message);
+  kv = null;
 }
 
 // ── Email config (Resend) ──
@@ -166,8 +182,26 @@ function getContent() {
   return contentCache;
 }
 
-// Fetch latest content from GitHub on startup (for cross-instance persistence on Vercel)
-async function fetchContentFromGithub() {
+// Load content from KV (primary), fallback to GitHub, then embedded default
+async function fetchContent() {
+  // Try KV first (cross-instance, instant)
+  if (kv) {
+    try {
+      var raw = await kv.get('content');
+      if (raw) {
+        var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          contentCache = data;
+          console.log('[Content] Loaded from KV');
+          try { writeJson(CONTENT_FILE, data); } catch (e) {}
+          return;
+        }
+      }
+    } catch (e) {
+      console.log('[Content] KV read failed:', e.message);
+    }
+  }
+  // Fallback: try GitHub
   try {
     var url = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/data/content.json?ref=' + GITHUB_BRANCH;
     var res = await fetch(url, {
@@ -178,38 +212,37 @@ async function fetchContentFromGithub() {
       var data = JSON.parse(Buffer.from(json.content, 'base64').toString('utf-8'));
       if (data && Object.keys(data).length > 0) {
         contentCache = data;
-        console.log('[GitHub content] Loaded from repo');
+        console.log('[Content] Loaded from GitHub');
         try { writeJson(CONTENT_FILE, data); } catch (e) {}
         return;
       }
     }
   } catch (e) {
-    console.log('[GitHub content] Not available, using embedded default');
+    console.log('[Content] GitHub not available, using embedded default');
   }
 }
-var contentInitPromise = fetchContentFromGithub();
+var contentInitPromise = fetchContent();
 
-// Save content — update cache immediately, then persist to GitHub
+// Save content — update cache immediately, persist to KV + file + GitHub
 async function saveContent(incoming) {
   contentCache = incoming;
-  var ghError = null;
+  var errors = [];
+  // Primary: KV (cross-instance, fast)
+  if (kv) {
+    try {
+      await kv.set('content', JSON.stringify(incoming));
+    } catch (e) { errors.push('KV:' + e.message); }
+  }
+  // Backup: local file
+  try { writeJson(CONTENT_FILE, incoming); } catch (e) { errors.push('File:' + e.message); }
+  // Backup: GitHub
   try {
     var buffer = Buffer.from(JSON.stringify(incoming, null, 2), 'utf-8');
     await commitToGithub('data/content.json', buffer);
-  } catch (err) {
-    ghError = err.message;
+  } catch (e) { errors.push('GitHub:' + e.message); }
+  if (errors.length > 0 && errors.length > (kv ? 0 : 1)) {
+    console.error('[saveContent] errors:', errors.join(', '));
   }
-  // Best-effort file backup
-  try {
-    var backupDir = path.join(DATA_DIR, 'backups');
-    fs.mkdirSync(backupDir, { recursive: true });
-    var stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    try { fs.copyFileSync(CONTENT_FILE, path.join(backupDir, 'content-' + stamp + '.json')); } catch (e) {}
-    var backups = fs.readdirSync(backupDir).filter(function(f) { return f.startsWith('content-'); }).sort();
-    while (backups.length > 20) fs.unlinkSync(path.join(backupDir, backups.shift()));
-  } catch (e) {}
-  try { writeJson(CONTENT_FILE, incoming); } catch (e) {}
-  if (ghError) throw new Error('GitHub save failed: ' + ghError);
 }
 
 // ── Consistent secret for sessions & signed cookies ──
@@ -631,12 +664,9 @@ app.post('/api/admin/upload', requireAdmin, async (req, res) => {
       }
       if (valid) {
         ptr[pathArr[pathArr.length - 1]] = '/uploads/' + filename;
-        try {
-          var buf = Buffer.from(JSON.stringify(contentCache, null, 2), 'utf-8');
-          await commitToGithub('data/content.json', buf);
-        } catch (e) {
+        saveContent(contentCache).catch(function(e) {
           console.error('[Content save after upload]', e.message);
-        }
+        });
         try { writeJson(CONTENT_FILE, contentCache); } catch (e) {}
       }
     }
