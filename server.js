@@ -678,6 +678,25 @@ app.post('/api/admin/upload', requireAdmin, async (req, res) => {
 // Serve uploaded images on Vercel (local fallback only)
 if (IS_VERCEL) {
   app.use('/uploads', express.static(UPLOADS_DIR));
+  // Fallback: fetch from GitHub if not found locally (cross-instance photo serving)
+  app.use('/uploads', async (req, res, next) => {
+    if (req.method !== 'GET') return next();
+    var filename = path.basename(req.path);
+    var localPath = path.join(UPLOADS_DIR, filename);
+    if (fs.existsSync(localPath)) return next();
+    try {
+      var ghUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/public/uploads/' + encodeURIComponent(filename);
+      var ghRes = await fetch(ghUrl);
+      if (!ghRes.ok) return next();
+      var buffer = Buffer.from(await ghRes.arrayBuffer());
+      fs.writeFileSync(localPath, buffer);
+      res.set('Content-Type', ghRes.headers.get('content-type') || 'image/jpeg');
+      res.set('Cache-Control', 'public, max-age=86400');
+      res.end(buffer);
+    } catch (e) {
+      next();
+    }
+  });
 }
 
 // Enquiries stats
