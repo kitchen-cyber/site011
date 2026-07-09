@@ -54,27 +54,27 @@
     "cards": [
       {
         "title": "Any Cuisine,\nAny Tradition",
-        "text": "Thai, Ethiopian, Japanese, Italian, Lebanese, Mexican, Indian — our chefs are masters across every culinary culture. Nothing is beyond our reach."
+        "text": "Thai, Italian, Lebanese, Mexican, Indian — our chefs are masters across every culinary culture. Nothing is beyond our reach."
       },
       {
         "title": "Any Dietary Need,\nAny Preference",
-        "text": "Vegan, keto, halal, kosher, gluten-free, allergen-safe — we don't just accommodate. We create dishes so good you'd never guess there was a restriction."
+        "text": "Vegan, halal, gluten-free, allergen-safe — we don't just accommodate. We create dishes so good you'd never guess there was a restriction."
       },
       {
-        "title": "From Street Food\nto Michelin Star",
-        "text": "Craving authentic Bangkok street food? A 12-course tasting menu? Grandma's secret recipe? We'll research, source, and perfect every dish."
+        "title": "From Street Food\nto Fine Dining ",
+        "text": "Craving authentic Bangkok street food? A 12-course tasting menu? Grandma's secret recipe? We are here to help you organise an event depending on your preferences."
       }
     ]
   },
   "stats": {
     "items": [
       {
-        "value": "14",
+        "value": "7",
         "suffix": "+",
         "label": "Years Excellence"
       },
       {
-        "value": "600",
+        "value": "200",
         "suffix": "+",
         "label": "Events Crafted"
       },
