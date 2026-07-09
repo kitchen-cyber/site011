@@ -130,7 +130,7 @@ try {
 // ── Google OAuth config ──
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'illiamolodii@gmail.com,kitchen@table42.co.uk')
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'illiamolodii@gmail.com,kitchen@table42.co.uk,ringoosamsungj710@gmail.com,dazzline23@gmail.com')
   .split(',')
   .map(e => e.trim().toLowerCase())
   .filter(Boolean);
