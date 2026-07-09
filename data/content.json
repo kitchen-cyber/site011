@@ -189,43 +189,31 @@
     "heroBackgroundImage": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1920&q=95",
     "label": "Our Team",
     "title": "Crafting Every Craving",
-    "subtitle": "A team of world-class chefs, each a master in their culinary tradition, united by one belief: cook anything.",
+    "subtitle": "A team of passionate chefs, each a master in their culinary tradition, united by one belief: food is fuel for both body and soul.",
     "members": [
       {
-        "name": "Marcus Thorne",
+        "name": "Kyle Summercorn",
         "role": "Executive Chef",
-        "bio": "20 years across Michelin kitchens in Paris, Tokyo and London. Flawless technique in French, Japanese and fusion cuisines.",
+        "bio": "10 years across restaurants and catering companies in London. Creative and visionary professional, who stands behind all our menu creation.",
         "image": "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=600&q=90&fit=crop&crop=face"
       },
       {
-        "name": "Selina Okafor",
-        "role": "Head of Global Cuisines",
-        "bio": "Born in Lagos, trained in Bangkok. Expert in West African, Southeast Asian and Middle Eastern flavours.",
+        "name": "Illia Molodii",
+        "role": "Head Chef",
+        "bio": "Our Head Chef is at the heart of our kitchen, combining classic techniques with fresh ideas to create dishes that keep guests coming back.",
         "image": "https://images.unsplash.com/photo-1583394293214-28ded15ee548?w=600&q=90&fit=crop&crop=face"
       },
       {
-        "name": "Dmitri Volkov",
-        "role": "Pastry & Baking Lead",
-        "bio": "Pastry chef trained in Vienna and Copenhagen. Known for modern patisserie that honours tradition.",
+        "name": "Emily Fullerton",
+        "role": "Executive Manager ",
+        "bio": "Our Executive Manager leads our team with expertise, ensuring every event is flawlessly planned and executed from start to finish.",
         "image": "https://images.unsplash.com/photo-1566554273541-37eec58ff643?w=600&q=90&fit=crop&crop=face"
       },
       {
-        "name": "Amara Chen",
-        "role": "Sous Chef",
-        "bio": "Specialist in East Asian and plant-based cuisines. Turns dietary restrictions into culinary highlights.",
+        "name": "Nansy Bohuta",
+        "role": "Operations Manager",
+        "bio": "Our Operations Manager is dedicated to maintaining the highest standards of organisation, quality, and customer satisfaction across every event.",
         "image": "https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=600&q=90&fit=crop&crop=face"
-      },
-      {
-        "name": "Liam O'Sullivan",
-        "role": "Events & Operations Director",
-        "bio": "10 years orchestrating high-stakes catering for London's finest private and corporate events.",
-        "image": "https://images.unsplash.com/photo-1581349485608-9469926a8e5e?w=600&q=90&fit=crop&crop=face"
-      },
-      {
-        "name": "Priya Kapoor",
-        "role": "Head of Culinary Research",
-        "bio": "Explores and authenticates recipes from every culture. Her library of 200+ spice blends is our secret weapon.",
-        "image": "https://images.unsplash.com/photo-1607631562417-9ffdfa6fe761?w=600&q=90&fit=crop&crop=face"
       }
     ],
     "valuesLabel": "Our Values",
