@@ -468,12 +468,16 @@ body {
 
   <div class="tabs">
     <button class="tab active" data-panel="content">Content</button>
+    <button class="tab" data-panel="seo">SEO</button>
     <button class="tab" data-panel="enquiries">Enquiries<span class="badge" id="enquiryBadge" style="display:none">0</span></button>
   </div>
 
   <div class="main">
     <div class="panel active" id="panel-content">
       <div id="contentEditor"></div>
+    </div>
+    <div class="panel" id="panel-seo">
+      <div id="seoEditor"></div>
     </div>
     <div class="panel" id="panel-enquiries">
       <div id="enquiriesStats"></div>
@@ -526,7 +530,12 @@ const FIELD_LABELS = {
   acceptText: 'Accept Button', declineText: 'Decline Button',
   linkPhilosophy: 'Link: Philosophy', linkServices: 'Link: Services', linkTeam: 'Link: Team',
   linkMenu: 'Link: Menu', linkCta: 'CTA Button',
-  pageTitle: 'Page Title', lastUpdated: 'Last Updated', heading: 'Heading', body: 'Body'
+  pageTitle: 'Page Title', lastUpdated: 'Last Updated', heading: 'Heading', body: 'Body',
+  metaKeywords: 'Meta Keywords', ogTitle: 'OG Title', ogDescription: 'OG Description',
+  ogImage: 'OG Image (social share)', twitterTitle: 'Twitter Title', twitterDescription: 'Twitter Description',
+  twitterImage: 'Twitter Image', twitterCard: 'Twitter Card Type',
+  canonicalUrl: 'Canonical URL', googleVerification: 'Google Verification Code',
+  robotsContent: 'Robots Directive'
 };
 const ARRAY_LABELS = { cards: 'Card', items: 'Item', members: 'Team Member', values: 'Value', sections: 'Section' };
 const STATUS_LABELS = { new: 'New', contacted: 'Contacted', quoted: 'Quoted', confirmed: 'Confirmed', archived: 'Archived' };
@@ -603,7 +612,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
-    document.getElementById('savebar').style.display = tab.dataset.panel === 'content' ? 'flex' : 'none';
+    document.getElementById('savebar').style.display = (tab.dataset.panel === 'content' || tab.dataset.panel === 'seo') ? 'flex' : 'none';
   });
 });
 
@@ -818,6 +827,134 @@ async function loadContent() {
     editor.appendChild(details);
   }
   document.getElementById('btnSave').disabled = true;
+  renderSeoPanel();
+}
+
+function renderSeoPanel() {
+  const seo = content.seo || {};
+  const panel = document.getElementById('seoEditor');
+  panel.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'section-card';
+  card.open = true;
+  const summary = document.createElement('summary');
+  summary.textContent = 'Search Engine Optimisation';
+  card.appendChild(summary);
+
+  const body = document.createElement('div');
+  body.className = 'section-body';
+
+  const fields = [
+    { key: 'metaKeywords', hint: 'Comma-separated. E.g.: catering, London, private dining, wedding catering' },
+    { key: 'metaDescription', hint: 'Shown in Google results. 150–160 characters recommended.' },
+    { key: 'ogTitle', hint: 'Title shown when shared on social media (Facebook, LinkedIn)' },
+    { key: 'ogDescription', hint: 'Description shown when shared on social media' },
+    { key: 'ogImage', hint: 'Image shown when shared on social media. Recommended: 1200×630px' },
+    { key: 'twitterTitle', hint: 'Title shown when shared on Twitter/X' },
+    { key: 'twitterDescription', hint: 'Description shown when shared on Twitter/X' },
+    { key: 'twitterImage', hint: 'Image shown when shared on Twitter/X' },
+    { key: 'twitterCard', hint: 'summary or summary_large_image' },
+    { key: 'canonicalUrl', hint: 'Main site URL (https://www.raqtfuel.com)' },
+    { key: 'robotsContent', hint: 'index, follow / noindex, nofollow' },
+    { key: 'googleVerification', hint: 'Paste your Google Search Console verification code here (content from meta tag)' }
+  ];
+
+  fields.forEach(f => {
+    const val = seo[f.key] || '';
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+    const label = document.createElement('label');
+    label.textContent = fieldLabel(f.key);
+    wrap.appendChild(label);
+
+    if (f.key === 'metaDescription' || f.key === 'ogDescription' || f.key === 'twitterDescription' || f.key === 'metaKeywords') {
+      const ta = document.createElement('textarea');
+      ta.value = val;
+      ta.addEventListener('input', () => {
+        if (!content.seo) content.seo = {};
+        content.seo[f.key] = ta.value;
+        markDirty();
+      });
+      wrap.appendChild(ta);
+    } else if (f.key === 'ogImage' || f.key === 'twitterImage') {
+      const imgField = document.createElement('div');
+      imgField.className = 'img-field';
+      const preview = document.createElement('img');
+      preview.className = 'img-preview';
+      preview.src = val || '/img/hero-bg.jpg';
+      preview.onerror = () => { preview.style.opacity = '0.3'; };
+      const controls = document.createElement('div');
+      controls.className = 'img-controls';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = val;
+      input.addEventListener('input', () => {
+        if (!content.seo) content.seo = {};
+        content.seo[f.key] = input.value;
+        preview.src = input.value;
+        preview.style.opacity = '1';
+        markDirty();
+      });
+      const file = document.createElement('input');
+      file.type = 'file';
+      file.accept = 'image/*';
+      file.style.display = 'none';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-upload';
+      btn.textContent = 'Upload image…';
+      btn.addEventListener('click', () => file.click());
+      file.addEventListener('change', async () => {
+        if (!file.files[0]) return;
+        btn.textContent = 'Uploading…';
+        btn.disabled = true;
+        const fd = new FormData();
+        fd.append('image', file.files[0]);
+        try {
+          const pathStr = encodeURIComponent('seo.' + f.key);
+          const res = await fetch('/api/admin/upload?path=' + pathStr, { method: 'POST', body: fd });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Upload failed');
+          input.value = json.url;
+          preview.src = json.url;
+          preview.style.opacity = '1';
+          if (!content.seo) content.seo = {};
+          content.seo[f.key] = json.url;
+          markDirty();
+        } catch (e) {
+          alert('Upload error: ' + e.message);
+        } finally {
+          btn.textContent = 'Upload image…';
+          btn.disabled = false;
+        }
+      });
+      controls.append(input, btn, file);
+      imgField.append(preview, controls);
+      wrap.appendChild(imgField);
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = val;
+      input.addEventListener('input', () => {
+        if (!content.seo) content.seo = {};
+        content.seo[f.key] = input.value;
+        markDirty();
+      });
+      wrap.appendChild(input);
+    }
+
+    if (f.hint) {
+      const hint = document.createElement('div');
+      hint.className = 'field-hint';
+      hint.textContent = f.hint;
+      wrap.appendChild(hint);
+    }
+    body.appendChild(wrap);
+  });
+
+  card.appendChild(body);
+  panel.appendChild(card);
 }
 
 document.getElementById('btnSave').addEventListener('click', async () => {

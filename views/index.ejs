@@ -6,10 +6,19 @@
 <meta name="color-scheme" content="only light">
 <title><%= c.site.title %></title>
 <meta name="description" content="<%= c.site.metaDescription %>">
-<meta property="og:title" content="<%= c.site.title %>">
-<meta property="og:description" content="<%= c.site.metaDescription %>">
+<meta name="keywords" content="<%= c.seo && c.seo.metaKeywords ? c.seo.metaKeywords : '' %>">
+<meta name="robots" content="<%= c.seo && c.seo.robotsContent ? c.seo.robotsContent : 'index, follow' %>">
+<% if (c.seo && c.seo.googleVerification) { %><meta name="google-site-verification" content="<%= c.seo.googleVerification %>"><% } %>
+<link rel="canonical" href="<%= c.seo && c.seo.canonicalUrl ? c.seo.canonicalUrl : 'https://www.raqtfuel.com' %>">
+<meta property="og:title" content="<%= c.seo && c.seo.ogTitle ? c.seo.ogTitle : c.site.title %>">
+<meta property="og:description" content="<%= c.seo && c.seo.ogDescription ? c.seo.ogDescription : c.site.metaDescription %>">
+<meta property="og:image" content="<%= c.seo && c.seo.ogImage ? c.seo.ogImage : c.hero.backgroundImage %>">
 <meta property="og:type" content="website">
-<meta property="og:image" content="<%= c.hero.backgroundImage %>">
+<meta property="og:url" content="<%= c.seo && c.seo.canonicalUrl ? c.seo.canonicalUrl : 'https://www.raqtfuel.com' %>">
+<meta name="twitter:card" content="<%= c.seo && c.seo.twitterCard ? c.seo.twitterCard : 'summary_large_image' %>">
+<meta name="twitter:title" content="<%= c.seo && c.seo.twitterTitle ? c.seo.twitterTitle : c.site.title %>">
+<meta name="twitter:description" content="<%= c.seo && c.seo.twitterDescription ? c.seo.twitterDescription : c.site.metaDescription %>">
+<meta name="twitter:image" content="<%= c.seo && c.seo.twitterImage ? c.seo.twitterImage : c.hero.backgroundImage %>">
 <link rel="icon" type="image/png" href="<%= c.site.logoNavImage %>">
 <script type="application/ld+json">
 {
