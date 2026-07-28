@@ -498,7 +498,7 @@ body {
 <script>
 /* ─────────── Labels ─────────── */
 const SECTION_LABELS = {
-  site: 'General (logo, title, SEO)',
+  site: 'General (logo, title)',
   nav: 'Navigation',
   hero: 'Hero Section',
   philosophy: 'Philosophy',
@@ -723,6 +723,8 @@ function renderStringField(container, pathArr, key, value) {
 
 function renderObjectFields(container, pathArr, obj) {
   for (const [key, value] of Object.entries(obj)) {
+    if (pathArr.length === 1 && pathArr[0] === 'site' && key === 'metaDescription') continue;
+    if (pathArr.length === 1 && pathArr[0] === 'seo') continue;
     const p = [...pathArr, key];
     if (typeof value === 'string') {
       renderStringField(container, p, key, value);
@@ -806,9 +808,21 @@ function renderArrayField(container, pathArr, key, arr) {
 
 async function loadContent() {
   content = await fetch('/api/admin/content').then(r => r.json());
+  if (!content.seo) content.seo = {};
+  const defaultSeo = {
+    metaKeywords: '', metaDescription: '', ogTitle: '', ogDescription: '',
+    ogImage: '/img/hero-bg.jpg', twitterTitle: '', twitterDescription: '',
+    twitterImage: '/img/hero-bg.jpg', twitterCard: 'summary_large_image',
+    canonicalUrl: 'https://www.raqtfuel.com', googleVerification: '',
+    robotsContent: 'index, follow'
+  };
+  for (const [k, v] of Object.entries(defaultSeo)) {
+    if (!content.seo[k]) content.seo[k] = v;
+  }
   const editor = document.getElementById('contentEditor');
   editor.innerHTML = '';
   for (const [sectionKey, sectionVal] of Object.entries(content)) {
+    if (sectionKey === 'seo') continue;
     const details = document.createElement('details');
     details.className = 'section-card';
     const summary = document.createElement('summary');

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="only light">
 <title><%= c.site.title %></title>
-<meta name="description" content="<%= c.site.metaDescription %>">
+<meta name="description" content="<%= c.seo && c.seo.metaDescription ? c.seo.metaDescription : c.site.metaDescription %>">
 <meta name="keywords" content="<%= c.seo && c.seo.metaKeywords ? c.seo.metaKeywords : '' %>">
 <meta name="robots" content="<%= c.seo && c.seo.robotsContent ? c.seo.robotsContent : 'index, follow' %>">
 <% if (c.seo && c.seo.googleVerification) { %><meta name="google-site-verification" content="<%= c.seo.googleVerification %>"><% } %>
