@@ -195,25 +195,25 @@
         "name": "Kyle Summercorn",
         "role": "Executive Chef",
         "bio": "10 years across restaurants and catering companies in London. Creative and visionary professional, who stands behind all our menu creation.",
-        "image": "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=600&q=90&fit=crop&crop=face"
+        "image": ""
       },
       {
         "name": "Illia Molodii",
         "role": "Head Chef",
         "bio": "Our Head Chef is at the heart of our kitchen, combining classic techniques with fresh ideas to create dishes that keep guests coming back.",
-        "image": "https://images.unsplash.com/photo-1583394293214-28ded15ee548?w=600&q=90&fit=crop&crop=face"
+        "image": ""
       },
       {
         "name": "Emily Fullerton",
         "role": "Executive Manager ",
         "bio": "Our Executive Manager leads our team with expertise, ensuring every event is flawlessly planned and executed from start to finish.",
-        "image": "https://images.unsplash.com/photo-1566554273541-37eec58ff643?w=600&q=90&fit=crop&crop=face"
+        "image": ""
       },
       {
         "name": "Nansy Bohuta",
         "role": "Operations Manager",
         "bio": "Our Operations Manager is dedicated to maintaining the highest standards of organisation, quality, and customer satisfaction across every event.",
-        "image": "https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=600&q=90&fit=crop&crop=face"
+        "image": ""
       }
     ],
     "valuesLabel": "Our Values",
